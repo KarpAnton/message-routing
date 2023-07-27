@@ -1,10 +1,7 @@
 package com.andersenlab.messagebroker.controller;
 
 import com.andersenlab.messagebroker.destination.MsgDestination;
-import com.andersenlab.messagebroker.entity.Consumer;
 import com.andersenlab.messagebroker.pubsub.Message;
-import com.andersenlab.messagebroker.pubsub.Publisher;
-import com.andersenlab.messagebroker.pubsub.Subscriber;
 import com.andersenlab.messagebroker.service.BrokerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,17 +18,10 @@ public class BrokerController implements BrokerControllerApi {
 
     @Override
     public void registerDestination(String destinationName) {
-        LOG.info("Incoming request to register new destination: " + destinationName);
+        LOG.info("Incoming request to register new destination: {}", destinationName);
         MsgDestination destination = MsgDestination.createDestination(destinationName);
         Long id = brokerService.registerDestination(destination);
-        LOG.info(destination.getName() + "with id " + id + " has been registered");
-    }
-
-    @Override
-    public void subscribe(Subscriber subscriber) {
-        LOG.info("Incoming request to register subscriber: " + subscriber.getName());
-        Consumer consumer = brokerService.subscribe(subscriber);
-        LOG.info("Created consumer: " + consumer.getName());
+        LOG.info("{} with id {} has been registered", destination.getName(), id);
     }
 
     @Override
@@ -39,8 +29,4 @@ public class BrokerController implements BrokerControllerApi {
 
     }
 
-    @Override
-    public void registerProducer(Publisher publisher) {
-
-    }
 }

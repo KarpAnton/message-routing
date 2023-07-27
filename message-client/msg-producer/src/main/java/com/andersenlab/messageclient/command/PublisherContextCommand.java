@@ -1,6 +1,6 @@
 package com.andersenlab.messageclient.command;
 
-import com.andersenlab.messagebroker.controller.BrokerControllerApi;
+import com.andersenlab.messagebroker.controller.PublisherControllerApi;
 import com.andersenlab.messagebroker.destination.MsgDestination;
 import com.andersenlab.messagebroker.pubsub.Publisher;
 import com.andersenlab.messageclient.context.PublisherContext;
@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 public class PublisherContextCommand {
 
     @Autowired
-    private BrokerControllerApi brokerControllerApi;
+    private PublisherControllerApi publisherControllerApi;
 
     @ShellMethod(key = "set-producer", value = "Sets producer parameters into context and sends them to broker")
     public void setProducerParameters(@ShellOption("-n") String producerName,
@@ -31,7 +31,7 @@ public class PublisherContextCommand {
 
         PublisherContext.setParameters(publisher);
 
-        brokerControllerApi.registerProducer(publisher);
+        publisherControllerApi.register(publisher);
     }
 
     private String extractAddress() {

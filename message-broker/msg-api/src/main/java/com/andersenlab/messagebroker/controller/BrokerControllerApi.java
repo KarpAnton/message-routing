@@ -16,15 +16,8 @@ public interface BrokerControllerApi {
     @RequestLine("POST " + CONTEXT_PATH + "/destination/{destinationName}")
     void registerDestination(@PathVariable String destinationName);
 
-    @PostMapping(value = CONTEXT_PATH + "/subscriber", consumes = "application/json")
-    @RequestLine("POST " + CONTEXT_PATH + "/subscriber")
-    void subscribe(@RequestBody Subscriber subscriber);
-
     @PostMapping(value = CONTEXT_PATH + "/message", consumes = "application/json")
     @RequestLine("POST " + CONTEXT_PATH + "/message")
     void sendMessage(@RequestBody Message message);
 
-    @PostMapping(value = CONTEXT_PATH + "/producer", consumes = "application/json")
-    @RequestLine("POST " + CONTEXT_PATH + "/producer")
-    void registerProducer(@RequestBody Publisher publisher);
 }
