@@ -1,0 +1,8 @@
+1690401894239:create-queue -n test-queue
+1690401939896:create-queue -n
+1690401955758:create-queue -n ""
+1690441672698:create-topic -n test-topic
+1690442142337:ei
+1690442145583:xtqi
+1690442321776:set -n producer-1
+1690442360870:ut
