@@ -1,4 +1,4 @@
-package com.andersenlab.messagebroker.mapper.exception;
+package com.andersenlab.messagebroker.exception;
 
 public class ProducerNotFoundException extends RuntimeException {
 

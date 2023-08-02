@@ -2,7 +2,7 @@ package com.andersenlab.messagebroker.service;
 
 import com.andersenlab.messagebroker.entity.Producer;
 import com.andersenlab.messagebroker.mapper.Mapper;
-import com.andersenlab.messagebroker.mapper.exception.ProducerNotFoundException;
+import com.andersenlab.messagebroker.exception.ProducerNotFoundException;
 import com.andersenlab.messagebroker.pubsub.Publisher;
 import com.andersenlab.messagebroker.repository.ProducerRepository;
 import org.springframework.beans.factory.annotation.Autowired;

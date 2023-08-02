@@ -6,7 +6,7 @@ import com.andersenlab.messagebroker.entity.Destination;
 import com.andersenlab.messagebroker.entity.Offset;
 import com.andersenlab.messagebroker.mapper.Mapper;
 import com.andersenlab.messagebroker.mapper.annotation.Converter;
-import com.andersenlab.messagebroker.mapper.exception.DestinationNotFoundException;
+import com.andersenlab.messagebroker.exception.DestinationNotFoundException;
 import com.andersenlab.messagebroker.pubsub.Subscriber;
 import com.andersenlab.messagebroker.repository.DestinationRepository;
 import com.andersenlab.messagebroker.repository.OffsetRepository;

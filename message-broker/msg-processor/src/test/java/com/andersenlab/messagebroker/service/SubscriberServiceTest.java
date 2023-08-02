@@ -2,7 +2,7 @@ package com.andersenlab.messagebroker.service;
 
 import com.andersenlab.messagebroker.destination.MsgDestination;
 import com.andersenlab.messagebroker.entity.Consumer;
-import com.andersenlab.messagebroker.mapper.exception.DestinationNotFoundException;
+import com.andersenlab.messagebroker.exception.DestinationNotFoundException;
 import com.andersenlab.messagebroker.pubsub.Subscriber;
 import com.andersenlab.messagebroker.repository.ConsumerRepository;
 import org.junit.jupiter.api.Assertions;
