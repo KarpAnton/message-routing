@@ -55,4 +55,12 @@ public class Consumer extends BaseEntity {
     public void setDestination(Destination destination) {
         this.destination = destination;
     }
+
+    public Offset getOffset() {
+        return offset;
+    }
+
+    public void setOffset(Offset offset) {
+        this.offset = offset;
+    }
 }

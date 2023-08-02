@@ -28,7 +28,7 @@
         </dependency>
         <dependency>
             <groupId>com.andersenlab</groupId>
-            <artifactId>msg-client-utils</artifactId>
+            <artifactId>msg-client</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -41,6 +41,10 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.andersenlab</groupId>
+            <artifactId>msg-client</artifactId>
         </dependency>
     </dependencies>
 

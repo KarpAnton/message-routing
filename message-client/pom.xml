@@ -18,7 +18,7 @@
         <module>msg-feign</module>
 		<module>msg-producer</module>
 		<module>msg-consumer</module>
-        <module>msg-client-utils</module>
+        <module>msg-client</module>
     </modules>
     <properties>
 		<java.version>17</java.version>
@@ -72,7 +72,7 @@
 			</dependency>
 			<dependency>
 				<groupId>com.andersenlab</groupId>
-				<artifactId>msg-client-utils</artifactId>
+				<artifactId>msg-client</artifactId>
 				<version>0.0.1-SNAPSHOT</version>
 			</dependency>
 			<dependency>

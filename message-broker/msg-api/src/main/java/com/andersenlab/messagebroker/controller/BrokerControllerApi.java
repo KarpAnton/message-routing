@@ -1,12 +1,10 @@
 package com.andersenlab.messagebroker.controller;
 
 import com.andersenlab.messagebroker.pubsub.Message;
-import com.andersenlab.messagebroker.pubsub.Publisher;
-import com.andersenlab.messagebroker.pubsub.Subscriber;
 import feign.RequestLine;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 import static com.andersenlab.messagebroker.controller.ContextPath.CONTEXT_PATH;
 
@@ -20,4 +18,14 @@ public interface BrokerControllerApi {
     @RequestLine("POST " + CONTEXT_PATH + "/message")
     void sendMessage(@RequestBody Message message);
 
+    @GetMapping(value = CONTEXT_PATH + "/messages/consumer/{consumerName}/destination/{destinationName}")
+    @RequestLine("GET " + CONTEXT_PATH + "/messages/consumer/{consumerName}/destination/{destinationName}")
+    List<Message> requestAvailableMessages(@PathVariable String consumerName,
+                                           @PathVariable String destinationName,
+                                           @RequestParam Integer batchSize);
+
+    @PostMapping(value = CONTEXT_PATH + "/message/{correlationId}/consumer/{consumerName}")
+    @RequestLine("POST " + CONTEXT_PATH + "/message/{correlationId}/consumer/{consumerName}")
+    void commitMessage(@PathVariable String correlationId,
+                       @PathVariable String consumerName);
 }

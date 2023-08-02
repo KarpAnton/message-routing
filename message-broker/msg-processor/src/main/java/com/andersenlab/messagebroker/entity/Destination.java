@@ -21,9 +21,6 @@ public class Destination extends BaseEntity {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "destination")
     private List<Offset> offsets;
 
-    @OneToOne(mappedBy = "destination")
-    private Producer producer;
-
     protected Destination() {
     }
 
@@ -59,13 +56,5 @@ public class Destination extends BaseEntity {
 
     public void setOffsets(List<Offset> offsets) {
         this.offsets = offsets;
-    }
-
-    public Producer getProducer() {
-        return producer;
-    }
-
-    public void setProducer(Producer producer) {
-        this.producer = producer;
     }
 }

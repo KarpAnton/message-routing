@@ -32,7 +32,7 @@
         </dependency>
         <dependency>
             <groupId>com.andersenlab</groupId>
-            <artifactId>msg-client-utils</artifactId>
+            <artifactId>msg-client</artifactId>
         </dependency>
     </dependencies>
 

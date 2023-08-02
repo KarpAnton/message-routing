@@ -10,6 +10,7 @@ public class Offset extends BaseEntity {
     private Consumer consumer;
 
     @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "destination_id")
     private Destination destination;
 
     @Column(name = "pos_pointer")

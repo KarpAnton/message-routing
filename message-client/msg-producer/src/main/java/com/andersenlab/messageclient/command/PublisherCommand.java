@@ -4,7 +4,6 @@ import com.andersenlab.client.utils.AddressUtils;
 import com.andersenlab.messagebroker.controller.PublisherControllerApi;
 import com.andersenlab.messagebroker.destination.MsgDestination;
 import com.andersenlab.messagebroker.pubsub.Publisher;
-import com.andersenlab.messageclient.context.PublisherContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
@@ -13,7 +12,7 @@ import org.springframework.shell.standard.ShellOption;
 import java.time.LocalDateTime;
 
 @ShellComponent
-public class PublisherContextCommand {
+public class PublisherCommand extends BaseCommand {
 
     @Autowired
     private PublisherControllerApi publisherControllerApi;
@@ -28,7 +27,7 @@ public class PublisherContextCommand {
         publisher.setDestination(MsgDestination.createDestination(destinationName));
         publisher.setCreatedAt(LocalDateTime.now());
 
-        PublisherContext.setParameters(publisher);
+        publisherContext.setClient(publisher);
 
         publisherControllerApi.register(publisher);
     }

@@ -3,12 +3,14 @@ package com.andersenlab.messagebroker.mapper;
 import com.andersenlab.messagebroker.mapper.annotation.Converter;
 import com.andersenlab.messagebroker.mapper.converter.BaseConverter;
 import com.andersenlab.messagebroker.mapper.exception.ConverterNotFoundException;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,13 +19,15 @@ import java.util.stream.Collectors;
 @Component
 public class MapperImpl implements Mapper, InitializingBean {
 
-    private static Map<String, BaseConverter> mappedConverters;
+    private final static String KEY_DELIMITER = "&&";
+
+    private Map<String, BaseConverter<?, ?>> mappedConverters;
 
     @Autowired
-    private List<BaseConverter> registeredConverters;
+    private List<BaseConverter<?, ?>> registeredConverters;
 
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
         // converter will be registered if it has @Converter annotation
         registeredConverters = registeredConverters.stream()
                 .filter(converter -> converter.getClass().getAnnotation(Converter.class) != null)
@@ -33,7 +37,7 @@ public class MapperImpl implements Mapper, InitializingBean {
         String key;
         for (BaseConverter converter : registeredConverters) {
             Class<? extends BaseConverter> converterClass = converter.getClass();
-            Method method = getConverterMethod(converterClass.getMethods());
+            Method method = getConverterMethod(converterClass);
             if (method != null) {
                 key = generateKey(method);
                 mappedConverters.put(key, converter);
@@ -59,26 +63,35 @@ public class MapperImpl implements Mapper, InitializingBean {
         return null;
     }
 
-    private Method getConverterMethod(Method[] methods) {
-        for (Method method : methods) {
-            if (method.getName().equals("convert")) {
-                return method;
-            }
+    private Method getConverterMethod(Class<? extends BaseConverter> converterClass) {
+
+        Class<?>[] parameters = Arrays.stream(converterClass.getGenericInterfaces())
+                .map(ParameterizedType.class::cast)
+                .filter(cl -> cl.getRawType().equals(BaseConverter.class))
+                .map(ParameterizedType::getActualTypeArguments)
+                .flatMap(Arrays::stream)
+                .map(Class.class::cast)
+                .toArray(Class<?>[]::new);
+
+        try {
+            return converterClass.getMethod("convert", parameters);
+        } catch (NoSuchMethodException e) {
+            return null;
         }
-        return null;
     }
 
     private String generateKey(Method method) {
-        Class<?>[] parameterTypes = method.getParameterTypes();
-        StringBuilder key = new StringBuilder();
-        for (Class<?> clazz : parameterTypes) {
-            key.append(clazz.getTypeName());
-        }
-        return key.toString();
+        String fromType = method.getParameterTypes()[0].getTypeName();
+        String toType = method.getParameterTypes()[1].getTypeName();
+        return generateKey(fromType, toType);
+    }
+
+    private String generateKey(String... typeNames) {
+        return StringUtils.joinWith(KEY_DELIMITER, typeNames);
     }
 
     private BaseConverter findConverter(Class<?> from, Class<?> to) {
-        String key = from.getTypeName() + to.getTypeName();
+        String key = generateKey(from.getTypeName(), to.getTypeName());
         BaseConverter foundConverter = mappedConverters.get(key);
         if (foundConverter != null) {
             return foundConverter;

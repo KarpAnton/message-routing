@@ -26,8 +26,14 @@ public class MessageToMessageEntityConverter implements BaseConverter<Message, c
     public void convert(Message from, com.andersenlab.messagebroker.entity.Message to) {
         to.setPayload(from.getPayload());
         to.setSentAt(from.getSentAt());
+        to.setCorrelationId(from.getCorrelationId());
         MsgDestination dest = from.getDestination();
-        Destination destEntity = dest instanceof MsgQueue ? mapper.map(dest, Queue.class) : mapper.map(dest, Topic.class);
+        Destination destEntity = destinationRepository.findByName(dest.getName());
+        if (destEntity == null) {
+            destEntity = dest instanceof MsgQueue
+                    ? mapper.map(dest, Queue.class)
+                    : mapper.map(dest, Topic.class);
+        }
         to.setDestination(destEntity);
     }
 }

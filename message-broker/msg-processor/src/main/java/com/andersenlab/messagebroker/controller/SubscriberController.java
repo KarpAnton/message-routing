@@ -19,12 +19,14 @@ public class SubscriberController implements SubscriberControllerApi {
     @Override
     public void subscribe(Subscriber subscriber) {
         LOG.info("Incoming request to register subscriber: {}", subscriber.getName());
-        Consumer consumer = subscriberService.subscribe(subscriber);
+        Consumer consumer = subscriberService.register(subscriber);
         LOG.info("Created consumer: {}", consumer.getName());
     }
 
     @Override
     public void unsubscribe(String subscriberName) {
-
+        LOG.info("Incoming request to unregister subscriber: {}", subscriberName);
+        subscriberService.unregister(subscriberName);
+        LOG.info("Consumer {} has been removed successfully", subscriberName );
     }
 }

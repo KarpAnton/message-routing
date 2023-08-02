@@ -7,6 +7,8 @@ import java.util.Map;
 
 public class Message {
 
+    private String correlationId;
+
     private String payload;
 
     private Publisher publisher;
@@ -55,5 +57,13 @@ public class Message {
 
     public void setHeaders(Map<String, String> headers) {
         this.headers = headers;
+    }
+
+    public String getCorrelationId() {
+        return correlationId;
+    }
+
+    public void setCorrelationId(String correlationId) {
+        this.correlationId = correlationId;
     }
 }

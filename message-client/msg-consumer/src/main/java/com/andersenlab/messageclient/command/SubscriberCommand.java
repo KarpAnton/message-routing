@@ -1,10 +1,10 @@
 package com.andersenlab.messageclient.command;
 
-import com.andersenlab.client.utils.AddressUtils;
+import com.andersenlab.client.context.ClientContext;
+import com.andersenlab.client.utils.AddressUtils;;
 import com.andersenlab.messagebroker.controller.SubscriberControllerApi;
 import com.andersenlab.messagebroker.destination.MsgDestination;
 import com.andersenlab.messagebroker.pubsub.Subscriber;
-import com.andersenlab.messageclient.context.SubscriberContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
@@ -14,6 +14,9 @@ import java.time.LocalDateTime;
 
 @ShellComponent
 public class SubscriberCommand {
+
+    @Autowired
+    private ClientContext<Subscriber> subscriberContext;
 
     @Autowired
     private SubscriberControllerApi subscriberControllerApi;
@@ -28,7 +31,7 @@ public class SubscriberCommand {
         subscriber.setDestination(MsgDestination.createDestination(destinationName));
         subscriber.setCreatedAt(LocalDateTime.now());
 
-        SubscriberContext.setParameters(subscriber);
+        subscriberContext.setClient(subscriber);
 
         subscriberControllerApi.subscribe(subscriber);
     }

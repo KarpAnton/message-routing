@@ -1,16 +1,20 @@
 package com.andersenlab.messagebroker.mapper.converter;
 
 import com.andersenlab.messagebroker.destination.MsgDestination;
-import com.andersenlab.messagebroker.destination.MsgQueue;
 import com.andersenlab.messagebroker.entity.Consumer;
 import com.andersenlab.messagebroker.entity.Destination;
-import com.andersenlab.messagebroker.entity.Queue;
-import com.andersenlab.messagebroker.entity.Topic;
+import com.andersenlab.messagebroker.entity.Offset;
 import com.andersenlab.messagebroker.mapper.Mapper;
 import com.andersenlab.messagebroker.mapper.annotation.Converter;
+import com.andersenlab.messagebroker.mapper.exception.DestinationNotFoundException;
 import com.andersenlab.messagebroker.pubsub.Subscriber;
+import com.andersenlab.messagebroker.repository.DestinationRepository;
+import com.andersenlab.messagebroker.repository.OffsetRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+
+import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Converter
 public class SubscriberToConsumerEntityConverter implements BaseConverter<Subscriber, Consumer> {
@@ -19,14 +23,33 @@ public class SubscriberToConsumerEntityConverter implements BaseConverter<Subscr
     @Lazy
     private Mapper mapper;
 
+    @Autowired
+    private DestinationRepository destinationRepository;
+
+    @Autowired
+    private OffsetRepository offsetRepository;
+
     @Override
     public void convert(Subscriber from, Consumer to) {
         to.setName(from.getName());
         to.setAddress(from.getAddress());
         MsgDestination dest = from.getDestination();
-        Destination destEntity = dest instanceof MsgQueue
-                ? mapper.map(dest, Queue.class)
-                : mapper.map(dest, Topic.class);
-        to.setDestination(destEntity);
+        to.setCreatedAt(LocalDateTime.now());
+        Destination foundDestination = destinationRepository.findByName(dest.getName());
+        if (foundDestination != null) {
+            to.setDestination(foundDestination);
+            mapOffset(to);
+        } else {
+            throw new DestinationNotFoundException("Destination " + dest.getName() + " not found");
+        }
+    }
+
+    private void mapOffset(Consumer to) {
+        if (to.getId() != null) {
+            Offset offset = offsetRepository.findByConsumerAndDestination(to.getId(), to.getDestination().getId());
+            to.setOffset(Objects.requireNonNullElseGet(offset, Offset::new));
+        } else {
+            to.setOffset(new Offset());
+        }
     }
 }

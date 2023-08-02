@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 public class BrokerController implements BrokerControllerApi {
 
@@ -26,7 +28,18 @@ public class BrokerController implements BrokerControllerApi {
 
     @Override
     public void sendMessage(Message message) {
-
+        LOG.info("Received message with correlationId {}", message.getCorrelationId());
+        brokerService.sendMessage(message);
+        LOG.info("Message {} has been saved", message.getCorrelationId());
     }
 
+    @Override
+    public List<Message> requestAvailableMessages(String consumerName, String destinationName, Integer batchSize) {
+        return null;
+    }
+
+    @Override
+    public void commitMessage(String correlationId, String consumerName) {
+
+    }
 }
