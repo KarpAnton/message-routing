@@ -14,7 +14,7 @@ public class Destination extends BaseEntity {
     @Column(name = "name", nullable = false, unique = true)
     private String name;
 
-    @OneToMany(fetch = FetchType.EAGER, orphanRemoval = true, cascade = CascadeType.ALL, mappedBy = "destination")
+    @OneToMany(fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL, mappedBy = "destination")
     @OrderBy("createdAt ASC")
     private List<Message> messages;
 

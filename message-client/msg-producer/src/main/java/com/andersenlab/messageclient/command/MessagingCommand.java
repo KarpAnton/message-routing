@@ -5,6 +5,8 @@ import com.andersenlab.messagebroker.destination.MsgDestination;
 import com.andersenlab.messagebroker.pubsub.Message;
 import com.andersenlab.messagebroker.pubsub.Publisher;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
@@ -15,6 +17,8 @@ import java.util.UUID;
 
 @ShellComponent
 public class MessagingCommand extends BaseCommand {
+
+    private static final Logger LOG = LoggerFactory.getLogger(MessagingCommand.class);
 
     @Autowired
     private BrokerControllerApi brokerControllerApi;
@@ -35,6 +39,7 @@ public class MessagingCommand extends BaseCommand {
 
     private MsgDestination createDestination(String destination) {
         if (StringUtils.isBlank(destination)) {
+            LOG.info("Extracted destination from the context");
             return publisherContext.getDestination();
         }
         if (StringUtils.isBlank(destination)) {
@@ -46,8 +51,8 @@ public class MessagingCommand extends BaseCommand {
 
     private Publisher createPublisher() {
         Publisher publisher = new Publisher();
-        publisher.setName(publisher.getName());
-        publisher.setAddress(publisher.getAddress());
+        publisher.setName(publisherContext.getName());
+        publisher.setAddress(publisherContext.getAddress());
         return publisher;
     }
 }

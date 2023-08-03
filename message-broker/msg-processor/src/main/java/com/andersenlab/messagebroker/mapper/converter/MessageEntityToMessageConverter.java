@@ -20,6 +20,7 @@ public class MessageEntityToMessageConverter implements BaseConverter<Message, c
 
     @Override
     public void convert(Message from, com.andersenlab.messagebroker.pubsub.Message to) {
+        to.setId(from.getId());
         to.setCorrelationId(from.getCorrelationId());
         to.setPublisher(mapper.map(from.getProducer(), Publisher.class));
         to.setPayload(from.getPayload());

@@ -3,7 +3,6 @@ package com.andersenlab.messagebroker.mapper.converter;
 import com.andersenlab.messagebroker.destination.MsgDestination;
 import com.andersenlab.messagebroker.destination.MsgQueue;
 import com.andersenlab.messagebroker.destination.MsgTopic;
-import com.andersenlab.messagebroker.entity.Destination;
 import com.andersenlab.messagebroker.entity.Producer;
 import com.andersenlab.messagebroker.entity.Queue;
 import com.andersenlab.messagebroker.mapper.Mapper;

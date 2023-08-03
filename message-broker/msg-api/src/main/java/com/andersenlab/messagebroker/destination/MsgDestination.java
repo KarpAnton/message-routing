@@ -7,6 +7,9 @@ public abstract class MsgDestination {
 
     protected String name;
 
+    public MsgDestination() {
+    }
+
     public MsgDestination(String name) {
         this.name = name;
     }

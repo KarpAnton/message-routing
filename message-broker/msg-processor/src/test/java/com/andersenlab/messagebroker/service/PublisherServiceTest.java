@@ -6,6 +6,7 @@ import com.andersenlab.messagebroker.exception.ProducerNotFoundException;
 import com.andersenlab.messagebroker.pubsub.Publisher;
 import com.andersenlab.messagebroker.repository.ProducerRepository;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

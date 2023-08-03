@@ -3,9 +3,12 @@ package com.andersenlab.messagebroker.pubsub;
 import com.andersenlab.messagebroker.destination.MsgDestination;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 public class Message {
+
+    private Long id;
 
     private String correlationId;
 
@@ -52,6 +55,9 @@ public class Message {
     }
 
     public Map<String, String> getHeaders() {
+        if (headers == null) {
+            headers = new HashMap<>();
+        }
         return headers;
     }
 
@@ -65,5 +71,13 @@ public class Message {
 
     public void setCorrelationId(String correlationId) {
         this.correlationId = correlationId;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 }

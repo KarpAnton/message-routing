@@ -27,7 +27,7 @@ public class SubscriberServiceTest {
     @Test
     public void shouldRegisterConsumer() {
         String subscriberName = "subscriber-1";
-        String destination = "queue-test-queue";
+        String destination = "queue-test-queue-1";
         Subscriber subscriber = createSubscriber(subscriberName, destination);
 
         brokerService.registerDestination(MsgDestination.createDestination(destination));

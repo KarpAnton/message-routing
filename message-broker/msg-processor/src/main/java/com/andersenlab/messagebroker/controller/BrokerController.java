@@ -29,7 +29,7 @@ public class BrokerController implements BrokerControllerApi {
     @Override
     public void sendMessage(Message message) {
         LOG.info("Received message with correlationId {}", message.getCorrelationId());
-        brokerService.sendMessage(message);
+        Message sentMessage = brokerService.sendMessage(message);
         LOG.info("Message {} has been saved", message.getCorrelationId());
     }
 

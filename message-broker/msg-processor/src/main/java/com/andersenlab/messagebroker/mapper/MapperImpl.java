@@ -64,7 +64,6 @@ public class MapperImpl implements Mapper, InitializingBean {
     }
 
     private Method getConverterMethod(Class<? extends BaseConverter> converterClass) {
-
         Class<?>[] parameters = Arrays.stream(converterClass.getGenericInterfaces())
                 .map(ParameterizedType.class::cast)
                 .filter(cl -> cl.getRawType().equals(BaseConverter.class))
