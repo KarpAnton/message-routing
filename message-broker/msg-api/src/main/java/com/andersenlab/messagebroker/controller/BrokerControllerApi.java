@@ -21,7 +21,6 @@ public interface BrokerControllerApi {
     @GetMapping(value = CONTEXT_PATH + "/messages/consumer/{consumerName}/destination/{destinationName}")
     @RequestLine("GET " + CONTEXT_PATH + "/messages/consumer/{consumerName}/destination/{destinationName}")
     List<Message> requestAvailableMessages(@PathVariable String consumerName,
-                                           @PathVariable String destinationName,
                                            @RequestParam Integer batchSize);
 
     @PostMapping(value = CONTEXT_PATH + "/message/{correlationId}/consumer/{consumerName}")

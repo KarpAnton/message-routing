@@ -34,8 +34,9 @@ public class BrokerController implements BrokerControllerApi {
     }
 
     @Override
-    public List<Message> requestAvailableMessages(String consumerName, String destinationName, Integer batchSize) {
-        return null;
+    public List<Message> requestAvailableMessages(String consumerName, Integer batchSize) {
+        LOG.info("Receiving {} messages for {}", batchSize, consumerName);
+        return brokerService.requestAvailableMessages(consumerName, batchSize);
     }
 
     @Override
