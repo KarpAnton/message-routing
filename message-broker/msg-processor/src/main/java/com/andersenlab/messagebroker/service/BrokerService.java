@@ -54,7 +54,7 @@ public class BrokerService {
         Consumer foundConsumer = consumerRepository.findByName(consumerName);
         Offset offset = foundConsumer.getOffset();
         int posPointer = offset.getPosPointer();
-        OffsetLimitRequest offsetLimitRequest = new OffsetLimitRequest(posPointer + 1, batchSize, Sort.by("createdAt").ascending());
+        OffsetLimitRequest offsetLimitRequest = new OffsetLimitRequest(posPointer, batchSize, Sort.by("createdAt").ascending());
         List<Message> messages = messageRepository.findAll(offsetLimitRequest).getContent();
         offset.setPosPointer(posPointer + messages.size());
 

@@ -19,9 +19,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @SpringBootTest
 public class BrokerServiceTest {
@@ -89,7 +91,7 @@ public class BrokerServiceTest {
         String destination = "queue-test-queue-3";
         String basePayload = "Hello World!-";
         int batchSize = 3;
-        int posPointer = 0;
+        int prevPosPointer, posPointer = 0;
         int amountOfMessages = 10;
 
         Consumer consumer = new Consumer();
@@ -102,32 +104,62 @@ public class BrokerServiceTest {
         Publisher publisher = createPublisher("Publisher-1", MsgDestination.createDestination(destination));
         publisherService.register(publisher);
 
-        for (int i = 0; i <= amountOfMessages; i++) {
+        List<Message> messages = new ArrayList<>(amountOfMessages);
+        for (int i = 0; i < amountOfMessages; i++) {
             Message message = createMessage(basePayload + i, destination);
             message.setPublisher(publisher);
+            messages.add(message);
             brokerService.sendMessage(message);
         }
 
         List<Message> extractedMessages = brokerService.requestAvailableMessages(consumer.getName(), batchSize);
         consumer = consumerRepository.findByName(consumer.getName());
-        posPointer += batchSize;
+        prevPosPointer = posPointer;
+        posPointer = incrPosPointer(posPointer, batchSize, amountOfMessages);
 
         Assertions.assertFalse(extractedMessages.isEmpty());
         Assertions.assertEquals(batchSize, extractedMessages.size());
         Assertions.assertEquals(posPointer, consumer.getOffset().getPosPointer());
+        Assertions.assertEquals(correlationIds(messages).subList(prevPosPointer, posPointer), correlationIds(extractedMessages));
 
         extractedMessages = brokerService.requestAvailableMessages(consumer.getName(), batchSize);
-        posPointer += batchSize;
+        prevPosPointer = posPointer;
+        posPointer = incrPosPointer(posPointer, batchSize, amountOfMessages);;
 
         Assertions.assertFalse(extractedMessages.isEmpty());
         Assertions.assertEquals(batchSize, extractedMessages.size());
         Assertions.assertEquals(posPointer, consumer.getOffset().getPosPointer());
+        Assertions.assertEquals(correlationIds(messages).subList(prevPosPointer, posPointer), correlationIds(extractedMessages));
 
         batchSize = 5;
         extractedMessages = brokerService.requestAvailableMessages(consumer.getName(), batchSize);
+        prevPosPointer = posPointer;
+        posPointer = incrPosPointer(posPointer, batchSize, amountOfMessages);
 
         Assertions.assertFalse(extractedMessages.isEmpty());
-        Assertions.assertNotEquals(amountOfMessages, extractedMessages.size());
+        Assertions.assertNotEquals(posPointer, extractedMessages.size());
+        Assertions.assertEquals(posPointer, consumer.getOffset().getPosPointer());
+        Assertions.assertEquals(correlationIds(messages).subList(prevPosPointer, posPointer), correlationIds(extractedMessages));
+
+        extractedMessages = brokerService.requestAvailableMessages(consumer.getName(), batchSize);
+        prevPosPointer = posPointer;
+        posPointer = incrPosPointer(posPointer, batchSize, amountOfMessages);
+
+        Assertions.assertTrue(extractedMessages.isEmpty());
+        Assertions.assertEquals(posPointer, amountOfMessages);
+        Assertions.assertEquals(posPointer, consumer.getOffset().getPosPointer());
+        Assertions.assertEquals(correlationIds(messages).subList(prevPosPointer, posPointer), correlationIds(extractedMessages));
+    }
+
+    private List<String> correlationIds(List<Message> messages) {
+        return messages.stream()
+                .map(Message::getCorrelationId)
+                .collect(Collectors.toList());
+    }
+
+    private int incrPosPointer(int prevPosPointer, int batchSize, int amountOfMessages) {
+        int res = prevPosPointer + batchSize;
+        return Math.min(res, amountOfMessages);
     }
 
     private Publisher createPublisher(String name, MsgDestination destination) {
