@@ -3,10 +3,12 @@ package com.andersenlab.messageclient.configuration;
 import com.andersenlab.messagebroker.controller.BrokerControllerApi;
 import com.andersenlab.messagebroker.controller.PublisherControllerApi;
 import com.andersenlab.messagebroker.controller.SubscriberControllerApi;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import feign.Contract;
 import feign.Feign;
-import feign.gson.GsonDecoder;
-import feign.gson.GsonEncoder;
+import feign.jackson.JacksonDecoder;
+import feign.jackson.JacksonEncoder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.openfeign.support.SpringMvcContract;
 import org.springframework.context.annotation.Bean;
@@ -38,11 +40,18 @@ public class FeignClientConfiguration {
         return abstractClient(SubscriberControllerApi.class);
     }
 
+    @Bean
+    public ObjectMapper objectMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        return objectMapper;
+    }
+
     private <T> T abstractClient(Class<T> tClass) {
         return Feign.builder()
                 .contract(springMvcContract())
-                .encoder(new GsonEncoder())
-                .decoder(new GsonDecoder())
+                .encoder(new JacksonEncoder(objectMapper()))
+                .decoder(new JacksonDecoder(objectMapper()))
                 .target(tClass, msgBrokerUrl);
     }
 }

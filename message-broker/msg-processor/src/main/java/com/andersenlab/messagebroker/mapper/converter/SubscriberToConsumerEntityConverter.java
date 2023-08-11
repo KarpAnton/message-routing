@@ -46,10 +46,18 @@ public class SubscriberToConsumerEntityConverter implements BaseConverter<Subscr
 
     private void mapOffset(Consumer to) {
         if (to.getId() != null) {
-            Offset offset = offsetRepository.findByConsumerAndDestination(to.getId(), to.getDestination().getId());
-            to.setOffset(Objects.requireNonNullElseGet(offset, Offset::new));
+            Offset offset = offsetRepository.findByConsumerAndDestination(to, to.getDestination());
+            to.setOffset(offset);
         } else {
-            to.setOffset(new Offset());
+            to.setOffset(createOffset(to));
         }
+    }
+
+    private Offset createOffset(Consumer to) {
+        Offset offset = new Offset();
+        offset.setConsumer(to);
+        offset.setDestination(to.getDestination());
+
+        return offset;
     }
 }

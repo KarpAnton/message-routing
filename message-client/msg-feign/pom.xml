@@ -22,10 +22,13 @@
             <groupId>com.andersenlab</groupId>
             <artifactId>msg-api</artifactId>
         </dependency>
-
         <dependency>
             <groupId>io.github.openfeign</groupId>
-            <artifactId>feign-gson</artifactId>
+            <artifactId>feign-jackson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
 
     </dependencies>

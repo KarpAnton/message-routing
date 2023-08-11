@@ -1,20 +1,28 @@
 package com.andersenlab.messagebroker.destination;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public abstract class MsgDestination {
 
     private static final String QUEUE_PREFIX = "queue-";
     private static final String TOPIC_PREFIX = "topic-";
 
-    protected String name;
+    private String name;
 
-    public MsgDestination() {
+    private DestinationType type;
+
+    public MsgDestination(DestinationType type) {
+        this.type = type;
     }
 
-    public MsgDestination(String name) {
+    public MsgDestination(String name, DestinationType type) {
         this.name = name;
+        this.type = type;
     }
 
-    public static MsgDestination createDestination(String name) {
+    @JsonCreator
+    public static MsgDestination createDestination(@JsonProperty("name") String name, @JsonProperty("type") DestinationType type) {
         if (name == null) {
             throw new NullPointerException("Destination name should not have null value");
         }
@@ -22,9 +30,21 @@ public abstract class MsgDestination {
             return new MsgQueue(name.substring(QUEUE_PREFIX.length()));
         } else if (name.startsWith(TOPIC_PREFIX)) {
             return new MsgTopic(name.substring(TOPIC_PREFIX.length()));
-        } else {
-            throw new IllegalArgumentException("Invalid destination name: " + name);
         }
+
+        switch (type) {
+            case QUEUE -> {
+                return new MsgQueue(name);
+            }
+            case TOPIC -> {
+                return new MsgTopic(name);
+            }
+            default -> throw new IllegalArgumentException("Invalid destination type: " + type);
+        }
+    }
+
+    public DestinationType getType() {
+        return type;
     }
 
     public String getName() {

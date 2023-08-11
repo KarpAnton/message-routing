@@ -18,7 +18,7 @@
         <module>msg-feign</module>
 		<module>msg-producer</module>
 		<module>msg-consumer</module>
-        <module>msg-client</module>
+        <module>msg-support</module>
     </modules>
     <properties>
 		<java.version>17</java.version>
@@ -72,18 +72,23 @@
 			</dependency>
 			<dependency>
 				<groupId>com.andersenlab</groupId>
-				<artifactId>msg-client</artifactId>
+				<artifactId>msg-support</artifactId>
 				<version>0.0.1-SNAPSHOT</version>
 			</dependency>
 			<dependency>
 				<groupId>io.github.openfeign</groupId>
-				<artifactId>feign-gson</artifactId>
-				<version>9.4.0</version>
+				<artifactId>feign-jackson</artifactId>
+				<version>12.4</version>
 			</dependency>
 			<dependency>
 				<groupId>org.apache.commons</groupId>
 				<artifactId>commons-lang3</artifactId>
 				<version>3.12.0</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.datatype</groupId>
+				<artifactId>jackson-datatype-jsr310</artifactId>
+				<version>2.15.2</version>
 			</dependency>
 
 		</dependencies>

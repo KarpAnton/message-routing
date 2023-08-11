@@ -9,7 +9,7 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>msg-client</artifactId>
+    <artifactId>msg-support</artifactId>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -21,6 +21,10 @@
         <dependency>
             <groupId>com.andersenlab</groupId>
             <artifactId>msg-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
         </dependency>
     </dependencies>
 

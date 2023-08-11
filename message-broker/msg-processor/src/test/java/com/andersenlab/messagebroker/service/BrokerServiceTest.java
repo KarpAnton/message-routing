@@ -1,18 +1,17 @@
 package com.andersenlab.messagebroker.service;
 
+import com.andersenlab.messagebroker.destination.DestinationType;
 import com.andersenlab.messagebroker.destination.MsgDestination;
-import com.andersenlab.messagebroker.entity.Consumer;
 import com.andersenlab.messagebroker.entity.Destination;
-import com.andersenlab.messagebroker.entity.Offset;
-import com.andersenlab.messagebroker.entity.Queue;
-import com.andersenlab.messagebroker.pubsub.Message;
-import com.andersenlab.messagebroker.pubsub.Publisher;
+import com.andersenlab.messagebroker.pubsub.*;
 import com.andersenlab.messagebroker.repository.ConsumerRepository;
 import com.andersenlab.messagebroker.repository.DestinationRepository;
 import com.andersenlab.messagebroker.repository.MessageRepository;
+import org.apache.commons.collections4.CollectionUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,6 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @SpringBootTest
@@ -32,6 +34,8 @@ public class BrokerServiceTest {
     private BrokerService brokerService;
     @Autowired
     private PublisherService publisherService;
+    @Autowired
+    private SubscriberService subscriberService;
 
     @Autowired
     private ConsumerRepository consumerRepository;
@@ -43,9 +47,9 @@ public class BrokerServiceTest {
     private MessageRepository messageRepository;
 
     @ParameterizedTest
-    @ValueSource(strings = {"queue-test-queue", "topic-test-topic"})
-    public void shouldRegisterDestination(String destination) {
-        MsgDestination msgDestination = MsgDestination.createDestination(destination);
+    @ValueSource(strings = {"queue-test-queue-0", "topic-test-topic-0"})
+    public void shouldRegisterDestinationByPrefix(String destination) {
+        MsgDestination msgDestination = MsgDestination.createDestination(destination, null);
         String destinationName = msgDestination.getName();
         brokerService.registerDestination(msgDestination);
 
@@ -56,17 +60,25 @@ public class BrokerServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"test-queue", "test-topic"})
-    public void shouldThrowIllegalArgumentException(String destination) {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> MsgDestination.createDestination(destination));
+    @CsvSource(value = {"test-queue-1,QUEUE", "test-topic-1,TOPIC"})
+    public void shouldRegisterDestinationByType(String destination, String type) {
+        DestinationType destinationType = DestinationType.valueOf(type);
+        MsgDestination msgDestination = MsgDestination.createDestination(destination, destinationType);
+        String destinationName = msgDestination.getName();
+        brokerService.registerDestination(msgDestination);
+
+        Destination foundDestination = destinationRepository.findByName(destinationName);
+
+        Assertions.assertNotNull(foundDestination);
+        Assertions.assertEquals(foundDestination.getName(), destinationName);
     }
 
     @Test
     public void shouldSendMessageToBroker() {
-        String testTopic = "topic-test-topic-2";
+        String testTopic = "topic-test-topic-3";
         String payload = "Hello World!";
 
-        Message message = createMessage(payload, testTopic);
+        Message message = createMessage(payload, MsgDestination.createDestination(testTopic, null));
         Publisher publisher = createPublisher("publisher-1", message.getDestination());
         message.setPublisher(publisher);
 
@@ -87,68 +99,180 @@ public class BrokerServiceTest {
 
     @Test
     @Transactional
-    public void shouldReceiveMessages() {
-        String destination = "queue-test-queue-3";
+    public void shouldReceiveMessagesFromQueueWithSingleConsumer() {
+        String destinationName = "test-queue-3";
         String basePayload = "Hello World!-";
         int batchSize = 3;
         int prevPosPointer, posPointer = 0;
-        int amountOfMessages = 10;
+        int amountOfAllMessages = 10;
 
-        Consumer consumer = new Consumer();
-        consumer.setDestination(new Queue("test-queue-3"));
-        consumer.setOffset(new Offset());
-        consumer.setName("Consumer-1");
+        MsgDestination destination = MsgDestination.createDestination(destinationName, DestinationType.QUEUE);
 
-        consumerRepository.save(consumer);
-
-        Publisher publisher = createPublisher("Publisher-1", MsgDestination.createDestination(destination));
+        Publisher publisher = createPublisher("Publisher-1", destination);
         publisherService.register(publisher);
 
-        List<Message> messages = new ArrayList<>(amountOfMessages);
-        for (int i = 0; i < amountOfMessages; i++) {
+        Subscriber subscriber = createSubscriber("Consumer-1", destination);
+        subscriberService.register(subscriber);
+
+        List<Message> messages = generateMessages(publisher, destination, basePayload, amountOfAllMessages);
+
+        List<Message> extractedMessages = brokerService.requestAvailableMessages(subscriber.getName(), batchSize).getMessages();
+        brokerService.commitMessages(new Commit("", subscriber.getName(), extractedMessages));
+        prevPosPointer = posPointer;
+        posPointer = incrPosPointer(posPointer, batchSize, amountOfAllMessages);
+
+        Assertions.assertFalse(extractedMessages.isEmpty());
+        Assertions.assertEquals(batchSize, extractedMessages.size());
+        Assertions.assertEquals(correlationIds(messages).subList(prevPosPointer, posPointer), correlationIds(extractedMessages));
+
+        extractedMessages = brokerService.requestAvailableMessages(subscriber.getName(), batchSize).getMessages();
+        brokerService.commitMessages(new Commit("", subscriber.getName(), extractedMessages));
+        prevPosPointer = posPointer;
+        posPointer = incrPosPointer(posPointer, batchSize, amountOfAllMessages);;
+
+        Assertions.assertFalse(extractedMessages.isEmpty());
+        Assertions.assertEquals(batchSize, extractedMessages.size());
+        Assertions.assertEquals(correlationIds(messages).subList(prevPosPointer, posPointer), correlationIds(extractedMessages));
+
+        batchSize = 5;
+        extractedMessages = brokerService.requestAvailableMessages(subscriber.getName(), batchSize).getMessages();
+        brokerService.commitMessages(new Commit("", subscriber.getName(), extractedMessages));
+        prevPosPointer = posPointer;
+        posPointer = incrPosPointer(posPointer, batchSize, amountOfAllMessages);
+
+        Assertions.assertFalse(extractedMessages.isEmpty());
+        Assertions.assertNotEquals(posPointer, extractedMessages.size());
+        Assertions.assertEquals(correlationIds(messages).subList(prevPosPointer, posPointer), correlationIds(extractedMessages));
+
+        extractedMessages = brokerService.requestAvailableMessages(subscriber.getName(), batchSize).getMessages();
+        brokerService.commitMessages(new Commit("", subscriber.getName(), extractedMessages));
+        prevPosPointer = posPointer;
+        posPointer = incrPosPointer(posPointer, batchSize, amountOfAllMessages);
+
+        Assertions.assertTrue(extractedMessages.isEmpty());
+        Assertions.assertEquals(posPointer, amountOfAllMessages);
+        Assertions.assertEquals(correlationIds(messages).subList(prevPosPointer, posPointer), correlationIds(extractedMessages));
+
+        consumerRepository.deleteAll();
+    }
+
+    @Test
+    public void shouldReceiveMessagesFromQueueWithMultipleConsumers() {
+        String destinationName = "test-queue-4";
+        String basePayload = "Hello World!-";
+        int amountOfAllMessages = 15;
+
+        MsgDestination destination = MsgDestination.createDestination(destinationName, DestinationType.QUEUE);
+
+        Publisher publisher = createPublisher("Publisher-2", destination);
+        publisherService.register(publisher);
+
+        List<Subscriber> subscribers = createAndRegisterSubscribers(destination, 3);
+
+        List<Message> messages = generateMessages(publisher, destination, basePayload, amountOfAllMessages);
+
+        List<Message> extractedMessagesByConsumer1 = new ArrayList<>();
+        List<Message> extractedMessagesByConsumer2 = new ArrayList<>();
+        List<Message> extractedMessagesByConsumer3 = new ArrayList<>();
+
+        Runnable runForConsumer1 = consumerJob(subscribers.get(0), 1, extractedMessagesByConsumer1);
+        Runnable runForConsumer2 = consumerJob(subscribers.get(1), 2, extractedMessagesByConsumer2);
+        Runnable runForConsumer3 = consumerJob(subscribers.get(2), 2, extractedMessagesByConsumer3);
+
+        ExecutorService executorService = Executors.newFixedThreadPool(3);
+        executorService.submit(runForConsumer1);
+        executorService.submit(runForConsumer2);
+        executorService.submit(runForConsumer3);
+        shutdownAndAwaitTermination(executorService);
+
+        int fullAmountOfProcessedMessages = extractedMessagesByConsumer1.size() + extractedMessagesByConsumer2.size() + extractedMessagesByConsumer3.size();
+
+        Assertions.assertEquals(messages.size(), fullAmountOfProcessedMessages);
+        Assertions.assertFalse(CollectionUtils.containsAny(extractedMessagesByConsumer1, extractedMessagesByConsumer2));
+        Assertions.assertFalse(CollectionUtils.containsAny(extractedMessagesByConsumer1, extractedMessagesByConsumer3));
+        Assertions.assertFalse(CollectionUtils.containsAny(extractedMessagesByConsumer2, extractedMessagesByConsumer3));
+
+        consumerRepository.deleteAll();
+    }
+
+    @Test
+    public void shouldReceiveMessagesFromTopicWithSingleConsumer() {
+        String destinationName = "test-topic-4";
+        String basePayload = "Hello World!-";
+        int amountOfAllMessages = 15;
+
+        MsgDestination destination = MsgDestination.createDestination(destinationName, DestinationType.TOPIC);
+
+        Publisher publisher = createPublisher("Publisher-3", destination);
+        publisherService.register(publisher);
+
+        List<Subscriber> subscribers = createAndRegisterSubscribers(destination, 3);
+
+        List<Message> messages = generateMessages(publisher, destination, basePayload, amountOfAllMessages);
+
+        List<Message> extractedMessagesByConsumer1 = new ArrayList<>();
+        List<Message> extractedMessagesByConsumer2 = new ArrayList<>();
+        List<Message> extractedMessagesByConsumer3 = new ArrayList<>();
+
+        Runnable runForConsumer1 = consumerJob(subscribers.get(0), 1, extractedMessagesByConsumer1);
+        Runnable runForConsumer2 = consumerJob(subscribers.get(1), 2, extractedMessagesByConsumer2);
+        Runnable runForConsumer3 = consumerJob(subscribers.get(2), 2, extractedMessagesByConsumer3);
+
+        ExecutorService executorService = Executors.newFixedThreadPool(3);
+        executorService.submit(runForConsumer1);
+        executorService.submit(runForConsumer2);
+        executorService.submit(runForConsumer3);
+        shutdownAndAwaitTermination(executorService);
+
+        Assertions.assertEquals(messages.size(), extractedMessagesByConsumer1.size());
+        Assertions.assertEquals(messages.size(), extractedMessagesByConsumer2.size());
+        Assertions.assertEquals(messages.size(), extractedMessagesByConsumer3.size());
+
+        consumerRepository.deleteAll();
+    }
+
+    private void shutdownAndAwaitTermination(ExecutorService pool) {
+        pool.shutdown();
+        try {
+            if (!pool.awaitTermination(5, TimeUnit.SECONDS)) {
+                pool.shutdownNow();
+                if (!pool.awaitTermination(5, TimeUnit.SECONDS))
+                    System.err.println("Pool did not terminate");
+            }
+        } catch (InterruptedException ex) {
+            pool.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private Runnable consumerJob(Subscriber subscriber, Integer batchSize, List<Message> container) {
+        return () -> {
+            boolean isRun = true;
+            while (isRun) {
+                Messages msgs = brokerService.requestAvailableMessages(subscriber.getName(), batchSize);
+                if (msgs.isNotEmpty()) {
+                    container.addAll(msgs.getMessages());
+                    brokerService.commitMessages(new Commit(subscriber.getDestination().getName(), subscriber.getName(), msgs.getMessages()));
+                } else {
+                    isRun = false;
+                }
+            }
+        };
+    }
+
+    private List<Message> generateMessages(Publisher publisher,
+                                           MsgDestination destination,
+                                           String basePayload,
+                                           int amountOfAllMessages) {
+
+        List<Message> messages = new ArrayList<>(amountOfAllMessages);
+        for (int i = 0; i < amountOfAllMessages; i++) {
             Message message = createMessage(basePayload + i, destination);
             message.setPublisher(publisher);
             messages.add(message);
             brokerService.sendMessage(message);
         }
-
-        List<Message> extractedMessages = brokerService.requestAvailableMessages(consumer.getName(), batchSize);
-        consumer = consumerRepository.findByName(consumer.getName());
-        prevPosPointer = posPointer;
-        posPointer = incrPosPointer(posPointer, batchSize, amountOfMessages);
-
-        Assertions.assertFalse(extractedMessages.isEmpty());
-        Assertions.assertEquals(batchSize, extractedMessages.size());
-        Assertions.assertEquals(posPointer, consumer.getOffset().getPosPointer());
-        Assertions.assertEquals(correlationIds(messages).subList(prevPosPointer, posPointer), correlationIds(extractedMessages));
-
-        extractedMessages = brokerService.requestAvailableMessages(consumer.getName(), batchSize);
-        prevPosPointer = posPointer;
-        posPointer = incrPosPointer(posPointer, batchSize, amountOfMessages);;
-
-        Assertions.assertFalse(extractedMessages.isEmpty());
-        Assertions.assertEquals(batchSize, extractedMessages.size());
-        Assertions.assertEquals(posPointer, consumer.getOffset().getPosPointer());
-        Assertions.assertEquals(correlationIds(messages).subList(prevPosPointer, posPointer), correlationIds(extractedMessages));
-
-        batchSize = 5;
-        extractedMessages = brokerService.requestAvailableMessages(consumer.getName(), batchSize);
-        prevPosPointer = posPointer;
-        posPointer = incrPosPointer(posPointer, batchSize, amountOfMessages);
-
-        Assertions.assertFalse(extractedMessages.isEmpty());
-        Assertions.assertNotEquals(posPointer, extractedMessages.size());
-        Assertions.assertEquals(posPointer, consumer.getOffset().getPosPointer());
-        Assertions.assertEquals(correlationIds(messages).subList(prevPosPointer, posPointer), correlationIds(extractedMessages));
-
-        extractedMessages = brokerService.requestAvailableMessages(consumer.getName(), batchSize);
-        prevPosPointer = posPointer;
-        posPointer = incrPosPointer(posPointer, batchSize, amountOfMessages);
-
-        Assertions.assertTrue(extractedMessages.isEmpty());
-        Assertions.assertEquals(posPointer, amountOfMessages);
-        Assertions.assertEquals(posPointer, consumer.getOffset().getPosPointer());
-        Assertions.assertEquals(correlationIds(messages).subList(prevPosPointer, posPointer), correlationIds(extractedMessages));
+        return messages;
     }
 
     private List<String> correlationIds(List<Message> messages) {
@@ -170,12 +294,29 @@ public class BrokerServiceTest {
         return publisher;
     }
 
-    private Message createMessage(String payload, String destination) {
+    private List<Subscriber> createAndRegisterSubscribers(MsgDestination destination, int amountOfSubscribers) {
+        List<Subscriber> subscribers = new ArrayList<>();
+        for (int i = 0; i< amountOfSubscribers; i++) {
+            Subscriber subscriber = createSubscriber("Consumer-" + 1 + i, destination);
+            subscriberService.register(subscriber);
+            subscribers.add(subscriber);
+        }
+        return subscribers;
+    }
+
+    private Subscriber createSubscriber(String name, MsgDestination destination) {
+        Subscriber subscriber = new Subscriber();
+        subscriber.setName(name);
+        subscriber.setDestination(destination);
+        subscriber.setCreatedAt(LocalDateTime.now());
+        return subscriber;
+    }
+
+    private Message createMessage(String payload, MsgDestination msgDestination) {
         Message message = new Message();
         message.setSentAt(LocalDateTime.now());
         message.setCorrelationId(UUID.randomUUID().toString());
         message.setPayload(payload);
-        MsgDestination msgDestination = MsgDestination.createDestination(destination);
         message.setDestination(msgDestination);
         return message;
     }

@@ -1,6 +1,8 @@
 package com.andersenlab.messageclient.command;
 
 import com.andersenlab.messagebroker.controller.BrokerControllerApi;
+import com.andersenlab.messagebroker.destination.DestinationType;
+import com.andersenlab.messagebroker.destination.MsgDestination;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.standard.ShellComponent;
@@ -17,20 +19,20 @@ public class DestinationCommand {
     private BrokerControllerApi brokerControllerApi;
 
     @ShellMethod(key = "create-topic", value = "Creates topic in message broker")
-    public String createTopic(@ShellOption({"-n", "-name"}) String topicName) {
-        createDestination(TOPIC_PREFIX + topicName);
+    public String createTopic(@ShellOption({"--n", "--name"}) String topicName) {
+        createDestination(topicName, DestinationType.TOPIC);
         return "Created";
     }
 
     @ShellMethod(key = "create-queue", value = "Creates queue in message broker")
-    public String createQueue(@ShellOption({"-n", "-name"}) String queueName) {
-        createDestination(QUEUE_PREFIX + queueName);
+    public String createQueue(@ShellOption({"--n", "--name"}) String queueName) {
+        createDestination(queueName, DestinationType.QUEUE);
         return "Created";
     }
 
-    private void createDestination(String destination) {
+    private void createDestination(String destination, DestinationType type) {
         if (StringUtils.isNotBlank(destination)) {
-            brokerControllerApi.registerDestination(destination);
+            brokerControllerApi.registerDestination(MsgDestination.createDestination(destination, type));
         } else {
             throw new IllegalArgumentException("Argument should not be empty");
         }

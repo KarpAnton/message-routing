@@ -8,6 +8,11 @@ import java.util.Map;
 
 @Entity
 @Table(name = "messages")
+@NamedQuery(
+        name = "Message.findAllByDestinationAndIsSentFalse",
+        query = "SELECT m FROM Message as m WHERE m.destination.id = :destinationId AND m.isSent = false",
+        lockMode = LockModeType.PESSIMISTIC_WRITE
+)
 public class Message extends BaseEntity {
 
     @Column(name = "correlationId", unique = true)
@@ -29,10 +34,13 @@ public class Message extends BaseEntity {
     @ManyToOne(fetch = FetchType.EAGER)
     private Producer producer;
 
+    @Column(name = "is_sent")
+    private boolean isSent;
+
     @ElementCollection
     @CollectionTable(name = "message_headers", joinColumns = @JoinColumn(name = "message_id", referencedColumnName = "id"))
-    @MapKeyColumn(name = "key")
-    @Column(name = "value")
+    @MapKeyColumn(name = "\"key\"")
+    @Column(name = "\"value\"")
     private Map<String, String> headers;
 
     public LocalDateTime getCreatedAt() {
@@ -81,6 +89,14 @@ public class Message extends BaseEntity {
 
     public void setCorrelationId(String correlationId) {
         this.correlationId = correlationId;
+    }
+
+    public boolean isSent() {
+        return isSent;
+    }
+
+    public void setSent(boolean sent) {
+        isSent = sent;
     }
 
     public Map<String, String> getHeaders() {

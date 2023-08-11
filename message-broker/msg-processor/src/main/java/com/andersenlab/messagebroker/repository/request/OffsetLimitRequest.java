@@ -1,4 +1,4 @@
-package com.andersenlab.messagebroker.repository.pageable;
+package com.andersenlab.messagebroker.repository.request;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;

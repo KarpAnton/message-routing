@@ -21,6 +21,9 @@ public class Destination extends BaseEntity {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "destination")
     private List<Offset> offsets;
 
+    @OneToMany(mappedBy = "destination", fetch = FetchType.LAZY)
+    private List<Consumer> consumers;
+
     protected Destination() {
     }
 

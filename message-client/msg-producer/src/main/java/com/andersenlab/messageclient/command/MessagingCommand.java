@@ -24,8 +24,8 @@ public class MessagingCommand extends BaseCommand {
     private BrokerControllerApi brokerControllerApi;
 
     @ShellMethod(key = "send", value = "Sends message to specified destination either topic or queue")
-    public void sendMessage(@ShellOption({"-m"}) String payload,
-                            @ShellOption({"-d"}) String destination) {
+    public void sendMessage(@ShellOption({"--m"}) String payload,
+                            @ShellOption(value = {"--d"}, defaultValue = "") String destination) {
 
         Message message = new Message();
         message.setPayload(payload);
@@ -46,7 +46,7 @@ public class MessagingCommand extends BaseCommand {
             throw new IllegalArgumentException("Destination is not present");
         }
 
-       return MsgDestination.createDestination(destination);
+       return MsgDestination.createDestination(destination, null);
     }
 
     private Publisher createPublisher() {

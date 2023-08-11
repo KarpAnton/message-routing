@@ -18,14 +18,13 @@ public class PublisherCommand extends BaseCommand {
     private PublisherControllerApi publisherControllerApi;
 
     @ShellMethod(key = "set-producer", value = "Sets up producer parameters into context and sends them to broker")
-    public void setProducerParameters(@ShellOption("-n") String producerName,
-                                      @ShellOption("-dest") String destinationName) {
+    public void setProducerParameters(@ShellOption("--n") String producerName,
+                                      @ShellOption("--dest") String destinationName) {
 
         Publisher publisher = new Publisher();
         publisher.setName(producerName);
         publisher.setAddress(AddressUtils.extractCurAddress());
-        publisher.setDestination(MsgDestination.createDestination(destinationName));
-        publisher.setCreatedAt(LocalDateTime.now());
+        publisher.setDestination(MsgDestination.createDestination(destinationName, null));
 
         publisherContext.setClient(publisher);
 

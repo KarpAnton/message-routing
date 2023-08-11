@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 public class PublisherService {
 
@@ -26,6 +28,7 @@ public class PublisherService {
             mapper.map(publisher, foundProducer);
         } else {
             Producer producer = mapper.map(publisher, Producer.class);
+            producer.setCreatedAt(LocalDateTime.now());
             producerRepository.save(producer);
         }
     }

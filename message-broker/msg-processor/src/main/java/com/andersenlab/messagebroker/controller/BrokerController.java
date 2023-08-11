@@ -1,14 +1,14 @@
 package com.andersenlab.messagebroker.controller;
 
 import com.andersenlab.messagebroker.destination.MsgDestination;
+import com.andersenlab.messagebroker.pubsub.Commit;
 import com.andersenlab.messagebroker.pubsub.Message;
+import com.andersenlab.messagebroker.pubsub.Messages;
 import com.andersenlab.messagebroker.service.BrokerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 public class BrokerController implements BrokerControllerApi {
@@ -19,9 +19,8 @@ public class BrokerController implements BrokerControllerApi {
     private BrokerService brokerService;
 
     @Override
-    public void registerDestination(String destinationName) {
-        LOG.info("Incoming request to register new destination: {}", destinationName);
-        MsgDestination destination = MsgDestination.createDestination(destinationName);
+    public void registerDestination(MsgDestination destination) {
+        LOG.info("Incoming request to register new destination: {}", destination.getName());
         Long id = brokerService.registerDestination(destination);
         LOG.info("{} with id {} has been registered", destination.getName(), id);
     }
@@ -34,13 +33,14 @@ public class BrokerController implements BrokerControllerApi {
     }
 
     @Override
-    public List<Message> requestAvailableMessages(String consumerName, Integer batchSize) {
-        LOG.info("Receiving {} messages for {}", batchSize, consumerName);
+    public Messages requestAvailableMessages(String consumerName, Integer batchSize) {
+        LOG.info("Requesting {} messages for {}", batchSize, consumerName);
         return brokerService.requestAvailableMessages(consumerName, batchSize);
     }
 
     @Override
-    public void commitMessage(String correlationId, String consumerName) {
-
+    public void commitMessages(Commit commit) {
+        LOG.info("Committing message(-s). {} message(-s) for {} destination", commit.getAcks(), commit.getDestinationName());
+        brokerService.commitMessages(commit);
     }
 }

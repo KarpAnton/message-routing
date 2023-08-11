@@ -5,6 +5,7 @@ import com.andersenlab.messagebroker.entity.Consumer;
 import com.andersenlab.messagebroker.exception.DestinationNotFoundException;
 import com.andersenlab.messagebroker.pubsub.Subscriber;
 import com.andersenlab.messagebroker.repository.ConsumerRepository;
+import com.andersenlab.messagebroker.repository.DestinationRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,13 +25,16 @@ public class SubscriberServiceTest {
     @Autowired
     private ConsumerRepository consumerRepository;
 
+    @Autowired
+    private DestinationRepository destinationRepository;
+
     @Test
     public void shouldRegisterConsumer() {
         String subscriberName = "subscriber-1";
-        String destination = "queue-test-queue-1";
+        String destination = "queue-test-queue-3";
         Subscriber subscriber = createSubscriber(subscriberName, destination);
 
-        brokerService.registerDestination(MsgDestination.createDestination(destination));
+        brokerService.registerDestination(MsgDestination.createDestination(destination, null));
         subscriberService.register(subscriber);
 
         Consumer consumer = consumerRepository.findByName(subscriberName);
@@ -52,7 +56,7 @@ public class SubscriberServiceTest {
     private Subscriber createSubscriber(String name, String destination) {
         Subscriber subscriber = new Subscriber();
         subscriber.setName(name);
-        subscriber.setDestination(MsgDestination.createDestination(destination));
+        subscriber.setDestination(MsgDestination.createDestination(destination, null));
         subscriber.setCreatedAt(LocalDateTime.now());
 
         return subscriber;

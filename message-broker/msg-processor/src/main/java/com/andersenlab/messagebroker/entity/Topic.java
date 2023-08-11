@@ -9,13 +9,6 @@ import java.util.List;
 @DiscriminatorValue("TOPIC")
 public class Topic extends Destination {
 
-    @OneToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "destination_consumers",
-            joinColumns = @JoinColumn(name = "destination_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "consumer_id", referencedColumnName = "id")
-    )
-    private List<Consumer> consumers;
-
     public Topic() {
     }
 
@@ -23,14 +16,4 @@ public class Topic extends Destination {
         super(name);
     }
 
-    public List<Consumer> getConsumers() {
-        if (consumers == null) {
-            consumers = new ArrayList<>();
-        }
-        return consumers;
-    }
-
-    public void setConsumers(List<Consumer> consumers) {
-        this.consumers = consumers;
-    }
 }

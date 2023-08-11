@@ -6,7 +6,6 @@ import com.andersenlab.messagebroker.exception.ProducerNotFoundException;
 import com.andersenlab.messagebroker.pubsub.Publisher;
 import com.andersenlab.messagebroker.repository.ProducerRepository;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -58,22 +57,11 @@ public class PublisherServiceTest {
         Assertions.assertThrows(ProducerNotFoundException.class, () -> publisherService.unregister("publisher-3"));
     }
 
-    @Test
-    public void shouldThrowIllegalArgumentException() {
-        String wrongDestFormat = "test-topic";
-
-        Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> createPublisher("publisher-4", wrongDestFormat),
-                "Invalid destination name: " + wrongDestFormat
-        );
-    }
-
     private Publisher createPublisher(String name, String destination) {
         Publisher publisher = new Publisher();
         publisher.setName(name);
         publisher.setCreatedAt(LocalDateTime.now());
-        publisher.setDestination(MsgDestination.createDestination(destination));
+        publisher.setDestination(MsgDestination.createDestination(destination, null));
         return publisher;
     }
 }

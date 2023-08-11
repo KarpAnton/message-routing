@@ -32,7 +32,11 @@
         </dependency>
         <dependency>
             <groupId>com.andersenlab</groupId>
-            <artifactId>msg-client</artifactId>
+            <artifactId>msg-support</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.andersenlab</groupId>
+            <artifactId>msg-feign</artifactId>
         </dependency>
     </dependencies>
 

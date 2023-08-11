@@ -28,7 +28,7 @@
         </dependency>
         <dependency>
             <groupId>com.andersenlab</groupId>
-            <artifactId>msg-client</artifactId>
+            <artifactId>msg-support</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -44,7 +44,7 @@
         </dependency>
         <dependency>
             <groupId>com.andersenlab</groupId>
-            <artifactId>msg-client</artifactId>
+            <artifactId>msg-support</artifactId>
         </dependency>
     </dependencies>
 

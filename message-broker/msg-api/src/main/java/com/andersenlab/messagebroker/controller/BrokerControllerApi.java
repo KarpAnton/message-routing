@@ -1,30 +1,31 @@
 package com.andersenlab.messagebroker.controller;
 
+import com.andersenlab.messagebroker.destination.MsgDestination;
+import com.andersenlab.messagebroker.pubsub.Commit;
 import com.andersenlab.messagebroker.pubsub.Message;
+import com.andersenlab.messagebroker.pubsub.Messages;
 import feign.RequestLine;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 import static com.andersenlab.messagebroker.controller.ContextPath.CONTEXT_PATH;
 
 public interface BrokerControllerApi {
 
-    @PostMapping(value = CONTEXT_PATH + "/destination/{destinationName}", consumes = "application/json")
-    @RequestLine("POST " + CONTEXT_PATH + "/destination/{destinationName}")
-    void registerDestination(@PathVariable String destinationName);
+    @PostMapping(value = CONTEXT_PATH + "/destination", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestLine("POST " + CONTEXT_PATH + "/destination")
+    void registerDestination(@RequestBody MsgDestination destination);
 
-    @PostMapping(value = CONTEXT_PATH + "/message", consumes = "application/json")
+    @PostMapping(value = CONTEXT_PATH + "/message", consumes = MediaType.APPLICATION_JSON_VALUE)
     @RequestLine("POST " + CONTEXT_PATH + "/message")
     void sendMessage(@RequestBody Message message);
 
-    @GetMapping(value = CONTEXT_PATH + "/messages/consumer/{consumerName}/destination/{destinationName}")
-    @RequestLine("GET " + CONTEXT_PATH + "/messages/consumer/{consumerName}/destination/{destinationName}")
-    List<Message> requestAvailableMessages(@PathVariable String consumerName,
-                                           @RequestParam Integer batchSize);
+    @GetMapping(value = CONTEXT_PATH + "/messages/consumer/{consumerName}")
+    @RequestLine("GET " + CONTEXT_PATH + "/messages/consumer/{consumerName}")
+    Messages requestAvailableMessages(@PathVariable String consumerName,
+                                      @RequestParam Integer batchSize);
 
-    @PostMapping(value = CONTEXT_PATH + "/message/{correlationId}/consumer/{consumerName}")
-    @RequestLine("POST " + CONTEXT_PATH + "/message/{correlationId}/consumer/{consumerName}")
-    void commitMessage(@PathVariable String correlationId,
-                       @PathVariable String consumerName);
+    @PutMapping(value = CONTEXT_PATH + "/message/commitment", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestLine("PUT " + CONTEXT_PATH + "/message/commitment")
+    void commitMessages(@RequestBody Commit commit);
 }
