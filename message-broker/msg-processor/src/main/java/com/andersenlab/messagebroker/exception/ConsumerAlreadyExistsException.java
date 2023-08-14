@@ -1,10 +1,8 @@
 package com.andersenlab.messagebroker.exception;
 
 public class ConsumerAlreadyExistsException extends RuntimeException {
-    public ConsumerAlreadyExistsException() {
-    }
 
-    public ConsumerAlreadyExistsException(String message) {
-        super(message);
+    public ConsumerAlreadyExistsException(String consumer) {
+        super("Consumer with name " + consumer + " already exists");
     }
 }

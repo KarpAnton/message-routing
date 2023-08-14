@@ -45,7 +45,7 @@ public class BrokerService {
             destination = destinationRepository.save(destination);
             return destination.getId();
         } else {
-            throw new ProducerAlreadyExistsException("Producer with name " + dest.getName() + " already exists");
+            throw new ProducerAlreadyExistsException(dest.getName());
         }
     }
 
@@ -63,7 +63,7 @@ public class BrokerService {
 
         Consumer foundConsumer = consumerRepository.findByName(consumerName);
         if (foundConsumer == null) {
-            throw new ConsumerNotFoundException("Consumer not found: " + consumerName);
+            throw new ConsumerNotFoundException(consumerName);
         }
         Destination destination = foundConsumer.getDestination();
         List<Message> messages;
@@ -88,7 +88,7 @@ public class BrokerService {
     public void commitMessages(Commit commit) {
         Consumer consumer = consumerRepository.findByName(commit.getConsumerName());
         if (consumer == null) {
-            throw new ConsumerNotFoundException("Consumer not found: " + commit.getConsumerName());
+            throw new ConsumerNotFoundException(commit.getConsumerName());
         }
 
         Destination destination = consumer.getDestination();

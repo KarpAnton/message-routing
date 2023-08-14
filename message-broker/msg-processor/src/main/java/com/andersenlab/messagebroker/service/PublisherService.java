@@ -44,7 +44,7 @@ public class PublisherService {
         if (producer != null) {
             producerRepository.delete(producer);
         } else {
-            throw new ProducerNotFoundException("Producer " + publisherName + " not found");
+            throw new ProducerNotFoundException(publisherName);
         }
     }
 }

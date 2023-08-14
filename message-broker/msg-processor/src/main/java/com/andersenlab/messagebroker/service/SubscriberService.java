@@ -1,6 +1,8 @@
 package com.andersenlab.messagebroker.service;
 
 import com.andersenlab.messagebroker.entity.Consumer;
+import com.andersenlab.messagebroker.entity.Offset;
+import com.andersenlab.messagebroker.exception.ConsumerNotFoundException;
 import com.andersenlab.messagebroker.mapper.Mapper;
 import com.andersenlab.messagebroker.mapper.exception.ConverterNotFoundException;
 import com.andersenlab.messagebroker.pubsub.Subscriber;
@@ -35,7 +37,18 @@ public class SubscriberService {
         if (foundConsumer != null) {
             consumerRepository.delete(foundConsumer);
         } else {
-            throw new ConverterNotFoundException("Consumer " + subscriberName + " not found");
+            throw new ConsumerNotFoundException(subscriberName);
+        }
+    }
+
+    @Transactional
+    public void detach(String subscriberName) {
+        Consumer foundConsumer = consumerRepository.findByName(subscriberName);
+        if (foundConsumer != null) {
+            foundConsumer.setDestination(null);
+            foundConsumer.setOffset(null);
+        } else {
+            throw new ConsumerNotFoundException(subscriberName);
         }
     }
 }

@@ -52,7 +52,6 @@ public class MessageListener implements Runnable {
         if (enableAutoCommit && messages.isNotEmpty()) { // at-most-once
             commitMessages(messages);
         }
-        int acks = 0;
         for (Message message : messages.getMessages()) {
             try {
                 messageProcessor.process(message);

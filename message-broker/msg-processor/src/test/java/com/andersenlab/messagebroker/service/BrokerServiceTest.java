@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @SpringBootTest
-public class BrokerServiceTest {
+public class BrokerServiceTest extends BaseTest {
 
     @Autowired
     private BrokerService brokerService;
@@ -49,7 +49,7 @@ public class BrokerServiceTest {
     @ParameterizedTest
     @ValueSource(strings = {"queue-test-queue-0", "topic-test-topic-0"})
     public void shouldRegisterDestinationByPrefix(String destination) {
-        MsgDestination msgDestination = MsgDestination.createDestination(destination, null);
+        MsgDestination msgDestination = MsgDestination.createDestination(name(destination), null);
         String destinationName = msgDestination.getName();
         brokerService.registerDestination(msgDestination);
 
@@ -63,7 +63,7 @@ public class BrokerServiceTest {
     @CsvSource(value = {"test-queue-1,QUEUE", "test-topic-1,TOPIC"})
     public void shouldRegisterDestinationByType(String destination, String type) {
         DestinationType destinationType = DestinationType.valueOf(type);
-        MsgDestination msgDestination = MsgDestination.createDestination(destination, destinationType);
+        MsgDestination msgDestination = MsgDestination.createDestination(name(destination), destinationType);
         String destinationName = msgDestination.getName();
         brokerService.registerDestination(msgDestination);
 
@@ -75,11 +75,11 @@ public class BrokerServiceTest {
 
     @Test
     public void shouldSendMessageToBroker() {
-        String testTopic = "topic-test-topic-3";
+        String testTopic = name("topic-test-topic-3");
         String payload = "Hello World!";
 
         Message message = createMessage(payload, MsgDestination.createDestination(testTopic, null));
-        Publisher publisher = createPublisher("publisher-1", message.getDestination());
+        Publisher publisher = createPublisher(name("publisher-1"), message.getDestination());
         message.setPublisher(publisher);
 
         publisherService.register(publisher);
@@ -100,7 +100,7 @@ public class BrokerServiceTest {
     @Test
     @Transactional
     public void shouldReceiveMessagesFromQueueWithSingleConsumer() {
-        String destinationName = "test-queue-3";
+        String destinationName = name("test-queue-3");
         String basePayload = "Hello World!-";
         int batchSize = 3;
         int prevPosPointer, posPointer = 0;
@@ -108,10 +108,10 @@ public class BrokerServiceTest {
 
         MsgDestination destination = MsgDestination.createDestination(destinationName, DestinationType.QUEUE);
 
-        Publisher publisher = createPublisher("Publisher-1", destination);
+        Publisher publisher = createPublisher(name("Publisher-1"), destination);
         publisherService.register(publisher);
 
-        Subscriber subscriber = createSubscriber("Consumer-1", destination);
+        Subscriber subscriber = createSubscriber(name("Consumer-1"), destination);
         subscriberService.register(subscriber);
 
         List<Message> messages = generateMessages(publisher, destination, basePayload, amountOfAllMessages);
@@ -158,13 +158,13 @@ public class BrokerServiceTest {
 
     @Test
     public void shouldReceiveMessagesFromQueueWithMultipleConsumers() {
-        String destinationName = "test-queue-4";
+        String destinationName = name("test-queue-4");
         String basePayload = "Hello World!-";
         int amountOfAllMessages = 15;
 
         MsgDestination destination = MsgDestination.createDestination(destinationName, DestinationType.QUEUE);
 
-        Publisher publisher = createPublisher("Publisher-2", destination);
+        Publisher publisher = createPublisher(name("Publisher-2"), destination);
         publisherService.register(publisher);
 
         List<Subscriber> subscribers = createAndRegisterSubscribers(destination, 3);
@@ -197,13 +197,13 @@ public class BrokerServiceTest {
 
     @Test
     public void shouldReceiveMessagesFromTopicWithSingleConsumer() {
-        String destinationName = "test-topic-4";
+        String destinationName = name("test-topic-4");
         String basePayload = "Hello World!-";
         int amountOfAllMessages = 15;
 
         MsgDestination destination = MsgDestination.createDestination(destinationName, DestinationType.TOPIC);
 
-        Publisher publisher = createPublisher("Publisher-3", destination);
+        Publisher publisher = createPublisher(name("Publisher-3"), destination);
         publisherService.register(publisher);
 
         List<Subscriber> subscribers = createAndRegisterSubscribers(destination, 3);

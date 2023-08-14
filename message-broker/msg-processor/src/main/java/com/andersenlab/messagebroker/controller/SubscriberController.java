@@ -32,4 +32,9 @@ public class SubscriberController implements SubscriberControllerApi {
         LOG.info("Consumer {} has been removed successfully", subscriberName );
         return ResponseEntity.ok().build();
     }
+
+    @Override
+    public void detach(String subscriberName) {
+        LOG.info("Detaching {} subscriber from destination (topic or queue)", subscriberName);
+    }
 }

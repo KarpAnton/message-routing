@@ -40,7 +40,7 @@ public class SubscriberToConsumerEntityConverter implements BaseConverter<Subscr
             to.setDestination(foundDestination);
             mapOffset(to);
         } else {
-            throw new DestinationNotFoundException("Destination " + dest.getName() + " not found");
+            throw new DestinationNotFoundException(dest.getName());
         }
     }
 

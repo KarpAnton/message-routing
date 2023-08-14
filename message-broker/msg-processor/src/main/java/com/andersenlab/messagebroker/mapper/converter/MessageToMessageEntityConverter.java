@@ -42,7 +42,7 @@ public class MessageToMessageEntityConverter implements BaseConverter<Message, c
         if (destEntity != null) {
             return destEntity;
         } else {
-            throw new DestinationNotFoundException("Destination " + dest.getName() + " not found");
+            throw new DestinationNotFoundException(dest.getName());
         }
     }
 
@@ -51,7 +51,7 @@ public class MessageToMessageEntityConverter implements BaseConverter<Message, c
         if (foundProducer != null) {
             return foundProducer;
         } else {
-            throw new ProducerNotFoundException("Producer " + publisher.getName() + " not registered");
+            throw new ProducerNotFoundException(publisher.getName());
         }
     }
 }
