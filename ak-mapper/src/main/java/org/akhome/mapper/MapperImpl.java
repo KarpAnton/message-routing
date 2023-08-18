@@ -1,12 +1,11 @@
-package com.andersenlab.messagebroker.mapper;
+package org.akhome.mapper;
 
-import com.andersenlab.messagebroker.mapper.annotation.Converter;
-import com.andersenlab.messagebroker.mapper.converter.BaseConverter;
-import com.andersenlab.messagebroker.mapper.exception.ConverterNotFoundException;
+import org.akhome.mapper.annotation.Converter;
+import org.akhome.mapper.converter.BaseConverter;
+import org.akhome.mapper.exception.ConverterNotFoundException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -16,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Component
 public class MapperImpl implements Mapper, InitializingBean {
 
     private final static String KEY_DELIMITER = "&&";

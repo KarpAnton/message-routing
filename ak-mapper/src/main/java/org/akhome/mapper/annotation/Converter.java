@@ -1,4 +1,4 @@
-package com.andersenlab.messagebroker.mapper.annotation;
+package org.akhome.mapper.annotation;
 
 import org.springframework.stereotype.Component;
 

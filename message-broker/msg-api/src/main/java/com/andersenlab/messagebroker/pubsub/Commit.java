@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -11,14 +12,14 @@ public class Commit {
 
     private String destinationName;
     private String consumerName;
-    private List<String> messageCorrelationIds;
+    private List<UUID> messageIds;
 
     public Commit(String destinationName, String consumerName, List<Message> processedMessages) {
         this.destinationName = destinationName;
         this.consumerName = consumerName;
-        this.messageCorrelationIds = processedMessages == null
+        this.messageIds = processedMessages == null
                 ? Collections.emptyList()
-                : processedMessages.stream().map(Message::getCorrelationId).collect(Collectors.toList());
+                : processedMessages.stream().map(Message::getId).collect(Collectors.toList());
     }
 
     public Commit() {
@@ -33,7 +34,7 @@ public class Commit {
     }
 
     public int getAcks() {
-        return messageCorrelationIds.size();
+        return messageIds.size();
     }
 
     public String getConsumerName() {
@@ -44,11 +45,11 @@ public class Commit {
         this.consumerName = consumerName;
     }
 
-    public List<String> getMessageCorrelationIds() {
-        return messageCorrelationIds;
+    public List<UUID> getMessageIds() {
+        return messageIds;
     }
 
-    public void setMessageCorrelationIds(List<String> messageCorrelationIds) {
-        this.messageCorrelationIds = messageCorrelationIds;
+    public void setMessageIds(List<UUID> messageIds) {
+        this.messageIds = messageIds;
     }
 }

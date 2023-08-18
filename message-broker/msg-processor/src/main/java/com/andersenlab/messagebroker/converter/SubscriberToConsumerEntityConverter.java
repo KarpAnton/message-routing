@@ -1,20 +1,20 @@
-package com.andersenlab.messagebroker.mapper.converter;
+package com.andersenlab.messagebroker.converter;
 
 import com.andersenlab.messagebroker.destination.MsgDestination;
 import com.andersenlab.messagebroker.entity.Consumer;
 import com.andersenlab.messagebroker.entity.Destination;
 import com.andersenlab.messagebroker.entity.Offset;
-import com.andersenlab.messagebroker.mapper.Mapper;
-import com.andersenlab.messagebroker.mapper.annotation.Converter;
 import com.andersenlab.messagebroker.exception.DestinationNotFoundException;
 import com.andersenlab.messagebroker.pubsub.Subscriber;
 import com.andersenlab.messagebroker.repository.DestinationRepository;
 import com.andersenlab.messagebroker.repository.OffsetRepository;
+import org.akhome.mapper.Mapper;
+import org.akhome.mapper.annotation.Converter;
+import org.akhome.mapper.converter.BaseConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 @Converter
 public class SubscriberToConsumerEntityConverter implements BaseConverter<Subscriber, Consumer> {

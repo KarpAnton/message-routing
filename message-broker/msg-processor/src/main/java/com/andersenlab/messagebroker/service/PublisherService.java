@@ -1,10 +1,10 @@
 package com.andersenlab.messagebroker.service;
 
 import com.andersenlab.messagebroker.entity.Producer;
-import com.andersenlab.messagebroker.mapper.Mapper;
 import com.andersenlab.messagebroker.exception.ProducerNotFoundException;
 import com.andersenlab.messagebroker.pubsub.Publisher;
 import com.andersenlab.messagebroker.repository.ProducerRepository;
+import org.akhome.mapper.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;

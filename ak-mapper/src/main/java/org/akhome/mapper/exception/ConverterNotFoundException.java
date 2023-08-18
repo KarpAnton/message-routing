@@ -1,4 +1,4 @@
-package com.andersenlab.messagebroker.mapper.exception;
+package org.akhome.mapper.exception;
 
 public class ConverterNotFoundException extends RuntimeException {
 

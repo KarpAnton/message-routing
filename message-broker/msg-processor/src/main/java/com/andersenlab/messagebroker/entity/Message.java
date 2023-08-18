@@ -5,18 +5,14 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Entity
 @Table(name = "messages")
-@NamedQuery(
-        name = "Message.findAllByDestinationAndIsSentFalse",
-        query = "SELECT m FROM Message as m WHERE m.destination.id = :destinationId AND m.isSent = false",
-        lockMode = LockModeType.PESSIMISTIC_WRITE
-)
-public class Message extends BaseEntity {
+public class Message {
 
-    @Column(name = "correlationId", unique = true)
-    private String correlationId;
+    @Id
+    private UUID id;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -34,14 +30,23 @@ public class Message extends BaseEntity {
     @ManyToOne(fetch = FetchType.EAGER)
     private Producer producer;
 
-    @Column(name = "is_sent")
-    private boolean isSent;
+    @JoinColumn(name = "requested_by_consumer")
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
+    private Consumer requestedBy;
 
     @ElementCollection
     @CollectionTable(name = "message_headers", joinColumns = @JoinColumn(name = "message_id", referencedColumnName = "id"))
     @MapKeyColumn(name = "\"key\"")
     @Column(name = "\"value\"")
     private Map<String, String> headers;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
@@ -75,10 +80,6 @@ public class Message extends BaseEntity {
         this.destination = destination;
     }
 
-    public String getCorrelationId() {
-        return correlationId;
-    }
-
     public Producer getProducer() {
         return producer;
     }
@@ -87,16 +88,12 @@ public class Message extends BaseEntity {
         this.producer = producer;
     }
 
-    public void setCorrelationId(String correlationId) {
-        this.correlationId = correlationId;
+    public Consumer getRequestedBy() {
+        return requestedBy;
     }
 
-    public boolean isSent() {
-        return isSent;
-    }
-
-    public void setSent(boolean sent) {
-        isSent = sent;
+    public void setRequestedBy(Consumer requestedBy) {
+        this.requestedBy = requestedBy;
     }
 
     public Map<String, String> getHeaders() {

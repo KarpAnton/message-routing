@@ -1,8 +1,9 @@
-package com.andersenlab.messagebroker.mapper.converter;
+package com.andersenlab.messagebroker.converter;
 
 import com.andersenlab.messagebroker.destination.MsgQueue;
 import com.andersenlab.messagebroker.entity.Queue;
-import com.andersenlab.messagebroker.mapper.annotation.Converter;
+import org.akhome.mapper.annotation.Converter;
+import org.akhome.mapper.converter.BaseConverter;
 
 @Converter
 public class MsgQueueToQueueEntityConverter implements BaseConverter<MsgQueue, Queue> {

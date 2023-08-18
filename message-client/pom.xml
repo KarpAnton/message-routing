@@ -90,6 +90,11 @@
 				<artifactId>jackson-datatype-jsr310</artifactId>
 				<version>2.15.2</version>
 			</dependency>
+			<dependency>
+				<groupId>org.akhome</groupId>
+				<artifactId>mapper-utility</artifactId>
+				<version>0.0.1</version>
+			</dependency>
 
 		</dependencies>
 	</dependencyManagement>

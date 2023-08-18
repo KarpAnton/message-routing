@@ -2,12 +2,14 @@ package com.andersenlab.messagebroker.service;
 
 import com.andersenlab.messagebroker.destination.DestinationType;
 import com.andersenlab.messagebroker.destination.MsgDestination;
+import com.andersenlab.messagebroker.entity.Consumer;
 import com.andersenlab.messagebroker.entity.Destination;
 import com.andersenlab.messagebroker.pubsub.*;
 import com.andersenlab.messagebroker.repository.ConsumerRepository;
 import com.andersenlab.messagebroker.repository.DestinationRepository;
 import com.andersenlab.messagebroker.repository.MessageRepository;
 import org.apache.commons.collections4.CollectionUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -45,6 +47,12 @@ public class BrokerServiceTest extends BaseTest {
 
     @Autowired
     private MessageRepository messageRepository;
+
+    @AfterEach
+    public void destroy() {
+        messageRepository.deleteAll();
+        consumerRepository.deleteAll();
+    }
 
     @ParameterizedTest
     @ValueSource(strings = {"queue-test-queue-0", "topic-test-topic-0"})
@@ -123,7 +131,7 @@ public class BrokerServiceTest extends BaseTest {
 
         Assertions.assertFalse(extractedMessages.isEmpty());
         Assertions.assertEquals(batchSize, extractedMessages.size());
-        Assertions.assertEquals(correlationIds(messages).subList(prevPosPointer, posPointer), correlationIds(extractedMessages));
+        Assertions.assertEquals(messageIds(messages).subList(prevPosPointer, posPointer), messageIds(extractedMessages));
 
         extractedMessages = brokerService.requestAvailableMessages(subscriber.getName(), batchSize).getMessages();
         brokerService.commitMessages(new Commit("", subscriber.getName(), extractedMessages));
@@ -132,7 +140,7 @@ public class BrokerServiceTest extends BaseTest {
 
         Assertions.assertFalse(extractedMessages.isEmpty());
         Assertions.assertEquals(batchSize, extractedMessages.size());
-        Assertions.assertEquals(correlationIds(messages).subList(prevPosPointer, posPointer), correlationIds(extractedMessages));
+        Assertions.assertEquals(messageIds(messages).subList(prevPosPointer, posPointer), messageIds(extractedMessages));
 
         batchSize = 5;
         extractedMessages = brokerService.requestAvailableMessages(subscriber.getName(), batchSize).getMessages();
@@ -142,7 +150,7 @@ public class BrokerServiceTest extends BaseTest {
 
         Assertions.assertFalse(extractedMessages.isEmpty());
         Assertions.assertNotEquals(posPointer, extractedMessages.size());
-        Assertions.assertEquals(correlationIds(messages).subList(prevPosPointer, posPointer), correlationIds(extractedMessages));
+        Assertions.assertEquals(messageIds(messages).subList(prevPosPointer, posPointer), messageIds(extractedMessages));
 
         extractedMessages = brokerService.requestAvailableMessages(subscriber.getName(), batchSize).getMessages();
         brokerService.commitMessages(new Commit("", subscriber.getName(), extractedMessages));
@@ -151,9 +159,7 @@ public class BrokerServiceTest extends BaseTest {
 
         Assertions.assertTrue(extractedMessages.isEmpty());
         Assertions.assertEquals(posPointer, amountOfAllMessages);
-        Assertions.assertEquals(correlationIds(messages).subList(prevPosPointer, posPointer), correlationIds(extractedMessages));
-
-        consumerRepository.deleteAll();
+        Assertions.assertEquals(messageIds(messages).subList(prevPosPointer, posPointer), messageIds(extractedMessages));
     }
 
     @Test
@@ -179,11 +185,7 @@ public class BrokerServiceTest extends BaseTest {
         Runnable runForConsumer2 = consumerJob(subscribers.get(1), 2, extractedMessagesByConsumer2);
         Runnable runForConsumer3 = consumerJob(subscribers.get(2), 2, extractedMessagesByConsumer3);
 
-        ExecutorService executorService = Executors.newFixedThreadPool(3);
-        executorService.submit(runForConsumer1);
-        executorService.submit(runForConsumer2);
-        executorService.submit(runForConsumer3);
-        shutdownAndAwaitTermination(executorService);
+        runJobs(runForConsumer1, runForConsumer2, runForConsumer3);
 
         int fullAmountOfProcessedMessages = extractedMessagesByConsumer1.size() + extractedMessagesByConsumer2.size() + extractedMessagesByConsumer3.size();
 
@@ -191,12 +193,10 @@ public class BrokerServiceTest extends BaseTest {
         Assertions.assertFalse(CollectionUtils.containsAny(extractedMessagesByConsumer1, extractedMessagesByConsumer2));
         Assertions.assertFalse(CollectionUtils.containsAny(extractedMessagesByConsumer1, extractedMessagesByConsumer3));
         Assertions.assertFalse(CollectionUtils.containsAny(extractedMessagesByConsumer2, extractedMessagesByConsumer3));
-
-        consumerRepository.deleteAll();
     }
 
     @Test
-    public void shouldReceiveMessagesFromTopicWithSingleConsumer() {
+    public void shouldReceiveMessagesFromTopicWithMultipleConsumers() {
         String destinationName = name("test-topic-4");
         String basePayload = "Hello World!-";
         int amountOfAllMessages = 15;
@@ -218,17 +218,99 @@ public class BrokerServiceTest extends BaseTest {
         Runnable runForConsumer2 = consumerJob(subscribers.get(1), 2, extractedMessagesByConsumer2);
         Runnable runForConsumer3 = consumerJob(subscribers.get(2), 2, extractedMessagesByConsumer3);
 
-        ExecutorService executorService = Executors.newFixedThreadPool(3);
-        executorService.submit(runForConsumer1);
-        executorService.submit(runForConsumer2);
-        executorService.submit(runForConsumer3);
-        shutdownAndAwaitTermination(executorService);
+        runJobs(runForConsumer1, runForConsumer2, runForConsumer3);
 
         Assertions.assertEquals(messages.size(), extractedMessagesByConsumer1.size());
         Assertions.assertEquals(messages.size(), extractedMessagesByConsumer2.size());
         Assertions.assertEquals(messages.size(), extractedMessagesByConsumer3.size());
+    }
 
-        consumerRepository.deleteAll();
+    @Test
+    public void shouldReceiveMessagesFromQueueMarkedAsRequested() {
+        String destinationName = name("test-topic-5");
+        String basePayload = "Hello World!-";
+        int amountOfAllMessages = 8;
+
+        MsgDestination destination = MsgDestination.createDestination(destinationName, DestinationType.QUEUE);
+
+        Publisher publisher = createPublisher(name("Publisher-4"), destination);
+        publisherService.register(publisher);
+
+        List<Subscriber> subscribers = createAndRegisterSubscribers(destination, 1);
+
+        List<Message> messages = generateMessages(publisher, destination, basePayload, amountOfAllMessages);
+        List<Message> container = new ArrayList<>();
+
+        Consumer foundConsumer = consumerRepository.findByName(subscribers.get(0).getName());
+        com.andersenlab.messagebroker.entity.Message msgEntity = messageRepository.findById(messages.get(0).getId()).get();
+        msgEntity.setRequestedBy(foundConsumer);
+        messageRepository.save(msgEntity);
+
+        msgEntity = messageRepository.findById(messages.get(5).getId()).get();
+        msgEntity.setRequestedBy(foundConsumer);
+        messageRepository.save(msgEntity);
+
+        Runnable runForConsumer = consumerJob(subscribers.get(0), 1, container);
+        runJobs(runForConsumer);
+
+        Assertions.assertEquals(amountOfAllMessages, container.size());
+        Assertions.assertEquals(messages.stream().map(Message::getId).toList(), container.stream().map(Message::getId).toList()); // checks if order is saved
+    }
+
+    @Test
+    public void shouldDistributeMessagesFromQueueByRequestingConsumers() {
+        String destinationName = name("test-topic-6");
+        String basePayload = "Hello World!-";
+        int amountOfAllMessages = 5;
+
+        MsgDestination destination = MsgDestination.createDestination(destinationName, DestinationType.QUEUE);
+
+        Publisher publisher = createPublisher(name("Publisher-5"), destination);
+        publisherService.register(publisher);
+
+        List<Subscriber> subscribers = createAndRegisterSubscribers(destination, 2);
+
+        List<Message> messages = generateMessages(publisher, destination, basePayload, amountOfAllMessages);
+
+        List<Message> container1 = new ArrayList<>();
+        List<Message> container2 = new ArrayList<>();
+
+        Consumer foundConsumer1 = consumerRepository.findByName(subscribers.get(0).getName());
+        Consumer foundConsumer2 = consumerRepository.findByName(subscribers.get(1).getName());
+        com.andersenlab.messagebroker.entity.Message msgEntity = messageRepository.findById(messages.get(0).getId()).get();
+        msgEntity.setRequestedBy(foundConsumer1);
+        messageRepository.save(msgEntity);
+
+        msgEntity = messageRepository.findById(messages.get(4).getId()).get();
+        msgEntity.setRequestedBy(foundConsumer1);
+        messageRepository.save(msgEntity);
+
+        msgEntity = messageRepository.findById(messages.get(1).getId()).get();
+        msgEntity.setRequestedBy(foundConsumer2);
+        messageRepository.save(msgEntity);
+
+        msgEntity = messageRepository.findById(messages.get(2).getId()).get();
+        msgEntity.setRequestedBy(foundConsumer2);
+        messageRepository.save(msgEntity);
+
+        msgEntity = messageRepository.findById(messages.get(3).getId()).get();
+        msgEntity.setRequestedBy(foundConsumer2);
+        messageRepository.save(msgEntity);
+
+        Runnable runForConsumer1 = consumerJob(subscribers.get(0), 1, container1);
+        Runnable runForConsumer2 = consumerJob(subscribers.get(1), 1, container2);
+        runJobs(runForConsumer1, runForConsumer2);
+
+        Assertions.assertEquals(2, container1.size());
+        Assertions.assertEquals(3, container2.size());
+    }
+
+    private void runJobs(Runnable... jobs) {
+        ExecutorService executorService = Executors.newFixedThreadPool(jobs.length);
+        for (Runnable job : jobs) {
+            executorService.submit(job);
+        }
+        shutdownAndAwaitTermination(executorService);
     }
 
     private void shutdownAndAwaitTermination(ExecutorService pool) {
@@ -275,9 +357,9 @@ public class BrokerServiceTest extends BaseTest {
         return messages;
     }
 
-    private List<String> correlationIds(List<Message> messages) {
+    private List<UUID> messageIds(List<Message> messages) {
         return messages.stream()
-                .map(Message::getCorrelationId)
+                .map(Message::getId)
                 .collect(Collectors.toList());
     }
 
@@ -315,7 +397,7 @@ public class BrokerServiceTest extends BaseTest {
     private Message createMessage(String payload, MsgDestination msgDestination) {
         Message message = new Message();
         message.setSentAt(LocalDateTime.now());
-        message.setCorrelationId(UUID.randomUUID().toString());
+        message.setId(UUID.randomUUID());
         message.setPayload(payload);
         message.setDestination(msgDestination);
         return message;

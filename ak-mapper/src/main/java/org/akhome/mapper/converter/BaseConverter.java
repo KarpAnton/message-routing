@@ -1,4 +1,4 @@
-package com.andersenlab.messagebroker.mapper.converter;
+package org.akhome.mapper.converter;
 
 public interface BaseConverter<F, T> {
 

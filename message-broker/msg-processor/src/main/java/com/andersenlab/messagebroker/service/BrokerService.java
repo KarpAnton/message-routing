@@ -5,16 +5,17 @@ import com.andersenlab.messagebroker.destination.MsgQueue;
 import com.andersenlab.messagebroker.entity.*;
 import com.andersenlab.messagebroker.exception.ConsumerNotFoundException;
 import com.andersenlab.messagebroker.exception.ProducerAlreadyExistsException;
-import com.andersenlab.messagebroker.mapper.Mapper;
 import com.andersenlab.messagebroker.pubsub.Commit;
 import com.andersenlab.messagebroker.pubsub.Messages;
 import com.andersenlab.messagebroker.repository.ConsumerRepository;
 import com.andersenlab.messagebroker.repository.DestinationRepository;
 import com.andersenlab.messagebroker.repository.MessageRepository;
 import com.andersenlab.messagebroker.repository.request.OffsetLimitRequest;
+import org.akhome.mapper.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -57,7 +58,7 @@ public class BrokerService {
         return mapper.map(messageEntity, com.andersenlab.messagebroker.pubsub.Message.class);
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
     public Messages requestAvailableMessages(String consumerName,
                                              Integer batchSize) {
 
@@ -66,16 +67,8 @@ public class BrokerService {
             throw new ConsumerNotFoundException(consumerName);
         }
         Destination destination = foundConsumer.getDestination();
-        List<Message> messages;
-        if (destination instanceof Queue queue) {
-            messages = extractMessagesFromQueue(queue, batchSize);
-        } else if (destination instanceof Topic topic) {
-            messages = extractMessagesFromTopic(foundConsumer, topic, batchSize);
-        } else {
-            messages = Collections.emptyList();
-        }
 
-        messages.forEach(message -> message.setSent(true));
+        List<Message> messages = extractMessages(foundConsumer, destination, batchSize);
 
         return new Messages(
                 messages.stream()
@@ -94,7 +87,7 @@ public class BrokerService {
         Destination destination = consumer.getDestination();
         if (destination instanceof Queue) {
             // removing read message from the queue
-            messageRepository.deleteByCorrelationIdIn(commit.getMessageCorrelationIds());
+            messageRepository.deleteByIdIn(commit.getMessageIds());
         } else {
             // increasing offset in case of topic
             Offset offset = consumer.getOffset();
@@ -102,12 +95,25 @@ public class BrokerService {
         }
     }
 
-    private List<Message> extractMessagesFromQueue(Queue queue, Integer batchSize) {
-        OffsetLimitRequest offsetLimitRequest = new OffsetLimitRequest(0, batchSize, Sort.by("createdAt").ascending());
-        return messageRepository.findAllByDestinationAndIsSentFalse(queue.getId(), offsetLimitRequest);
+    private List<Message> extractMessages(Consumer consumer, Destination destination, Integer batchSize) {
+        List<Message> messages;
+        if (destination instanceof Queue queue) {
+            messages = extractMessages(consumer, queue, batchSize);
+            messages.forEach(message -> message.setRequestedBy(consumer));
+        } else if (destination instanceof Topic topic) {
+            messages = extractMessages(consumer, topic, batchSize);
+        } else {
+            messages = Collections.emptyList();
+        }
+        return messages;
     }
 
-    private List<Message> extractMessagesFromTopic(Consumer consumer, Topic topic, Integer batchSize) {
+    private List<Message> extractMessages(Consumer consumer, Queue queue, Integer batchSize) {
+        OffsetLimitRequest offsetLimitRequest = new OffsetLimitRequest(0, batchSize, Sort.by("createdAt").ascending());
+        return messageRepository.findAllByDestination(queue.getId(), consumer.getId(), offsetLimitRequest);
+    }
+
+    private List<Message> extractMessages(Consumer consumer, Topic topic, Integer batchSize) {
         Offset offset = consumer.getOffset();
         int posPointer = offset.getPosPointer();
         OffsetLimitRequest offsetLimitRequest = new OffsetLimitRequest(posPointer, batchSize, Sort.by("createdAt").ascending());

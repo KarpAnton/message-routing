@@ -3,6 +3,7 @@ package com.andersenlab.messagebroker.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "consumers")
@@ -23,6 +24,9 @@ public class Consumer extends BaseEntity {
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "offset_id")
     private Offset offset;
+
+    @OneToMany(mappedBy = "requestedBy", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
+    private List<Message> consumedMessages;
 
     public String getName() {
         return name;
@@ -62,5 +66,13 @@ public class Consumer extends BaseEntity {
 
     public void setOffset(Offset offset) {
         this.offset = offset;
+    }
+
+    public List<Message> getConsumedMessages() {
+        return consumedMessages;
+    }
+
+    public void setConsumedMessages(List<Message> consumedMessages) {
+        this.consumedMessages = consumedMessages;
     }
 }

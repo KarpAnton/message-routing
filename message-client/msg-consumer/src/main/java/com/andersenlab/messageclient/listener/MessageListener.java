@@ -57,10 +57,8 @@ public class MessageListener implements Runnable {
                 messageProcessor.process(message);
                 processedMessages.add(message);
             } catch (Exception e) {
-                LOG.error("Exception thrown during processing message with correlation id {}. Exception message: {}", message.getCorrelationId(), e.getMessage());
-                if (!enableAutoCommit) { // committing only processed messages (at-least-once)
-                    commitMessages(processedMessages);
-                }
+                LOG.error("Exception thrown during processing message with correlation id {}. Exception message: {}", message.getId(), e.getMessage());
+                break;
             }
         }
         if (!enableAutoCommit && messages.isNotEmpty()) { // committing processed messages (at-least-once)

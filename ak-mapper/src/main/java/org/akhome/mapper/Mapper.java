@@ -1,4 +1,4 @@
-package com.andersenlab.messagebroker.mapper;
+package org.akhome.mapper;
 
 public interface Mapper {
 

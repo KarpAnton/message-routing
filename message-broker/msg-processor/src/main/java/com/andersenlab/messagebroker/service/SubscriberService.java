@@ -1,12 +1,10 @@
 package com.andersenlab.messagebroker.service;
 
 import com.andersenlab.messagebroker.entity.Consumer;
-import com.andersenlab.messagebroker.entity.Offset;
 import com.andersenlab.messagebroker.exception.ConsumerNotFoundException;
-import com.andersenlab.messagebroker.mapper.Mapper;
-import com.andersenlab.messagebroker.mapper.exception.ConverterNotFoundException;
 import com.andersenlab.messagebroker.pubsub.Subscriber;
 import com.andersenlab.messagebroker.repository.ConsumerRepository;
+import org.akhome.mapper.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

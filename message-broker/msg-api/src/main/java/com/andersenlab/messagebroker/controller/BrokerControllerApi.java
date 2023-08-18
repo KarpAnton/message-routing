@@ -18,7 +18,7 @@ public interface BrokerControllerApi {
 
     @PostMapping(value = CONTEXT_PATH + "/message", consumes = MediaType.APPLICATION_JSON_VALUE)
     @RequestLine("POST " + CONTEXT_PATH + "/message")
-    void sendMessage(@RequestBody Message message);
+    Message sendMessage(@RequestBody Message message);
 
     @GetMapping(value = CONTEXT_PATH + "/messages/consumer/{consumerName}")
     @RequestLine("GET " + CONTEXT_PATH + "/messages/consumer/{consumerName}")

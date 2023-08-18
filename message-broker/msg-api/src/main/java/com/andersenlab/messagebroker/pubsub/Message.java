@@ -6,12 +6,11 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class Message {
 
-    private Long id;
-
-    private String correlationId;
+    private UUID id;
 
     private String payload;
 
@@ -66,19 +65,20 @@ public class Message {
         this.headers = headers;
     }
 
-    public String getCorrelationId() {
-        return correlationId;
-    }
-
-    public void setCorrelationId(String correlationId) {
-        this.correlationId = correlationId;
-    }
-
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
+    }
+
+    public void setCorrelationId(UUID correlationId) {
+        getHeaders().put(HeaderKeys.CORRELATION_ID, correlationId.toString());
+    }
+
+    public UUID getCorrelationId() {
+        String correlationId = getHeaders().get(HeaderKeys.CORRELATION_ID);
+        return correlationId == null ? null : UUID.fromString(correlationId);
     }
 }

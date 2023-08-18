@@ -38,6 +38,10 @@
             <groupId>com.andersenlab</groupId>
             <artifactId>msg-feign</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.akhome</groupId>
+            <artifactId>mapper-utility</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
